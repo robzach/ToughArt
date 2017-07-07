@@ -16,14 +16,23 @@
      * add polygon support (define the number of sides and it does the rest)
      * fix selector so it only touches the single underlying ball, not everything nearby
      * add serial data support for Arduino position information
+     
+  v. 0.2, Jul. 7, 2017
+    add support for incoming serial position data from Arduino
  
  */
 
 import controlP5.*;
 import java.util.*;
+import processing.serial.*;
+
+Serial myPort;
 
 final static ArrayList<Shape> ball = new ArrayList();
 boolean poly_bool = false;
+
+boolean serial = true;
+int wheelX, wheelY;
 
 int ballRad = 15;
 int spacing = 3;
@@ -62,11 +71,30 @@ void setup() {
     .setPosition(10, 30)
     .addItems(l)
     ;
+  cp5.addToggle("serial")
+     .setPosition(200,10)
+     .setSize(20,10)
+     ;
+    
+  if (serial) {
+    //diagnostic to list all ports
+    for (int i = 0; i < Serial.list().length; i++) {
+      println("Serial.list()[", i, "] = ", Serial.list()[i]);
+    }
+    String portName = Serial.list()[6]; // may have to change this number later
+    myPort = new Serial(this, portName, 9600);
+  }
 }
 
 void draw() {
   background(back);
-  for (Shape b : ball) b.display();
+  
+  if (!serial) for (Shape b : ball) b.display();
+  else {
+    for (Shape b : ball) b.display(wheelX, wheelY);
+    fill(255);
+    ellipse(wheelX, wheelY, 2,2);
+  }
 }
 
 void mouseClicked() {
@@ -114,9 +142,32 @@ class Shape
     else fill(unselected);
     ellipse(x, y, rad, rad);
   }
+  
+  void display(int wheelXin, int wheelYin) {
+    if (abs(wheelXin - x) < rad && abs(wheelYin - y) < rad) moused = true;
+    if (moused)fill(selected);
+    else fill(unselected);
+    ellipse(x, y, rad, rad);
+  }
 
   void resetColor() {
     moused = false;
+  }
+}
+
+// from http://www.interactiondesign.se/wiki/courses:intro.prototyping.spring.2015.jan19_20_21
+// though I had to change the second line to use readStringUntil() to make it actually work
+void serialEvent(Serial myPort) {
+  String inString = myPort.readStringUntil(10);
+  if (inString != null) {
+    inString = trim(inString);
+    String values [] = split(inString, ',');
+    if (values.length>1) {
+      wheelX = int(values[0]);
+      wheelY = int(values[1]);
+      wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
+      wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
+    }
   }
 }
 
