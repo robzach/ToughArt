@@ -13,6 +13,8 @@
  *  * modified code to accommodate two encoders
  *  * works well with Serial Plotter
  *  * to do: bound ranges to prepare signal to be transmitted to Processing
+ * v 0.11 7 Jul. 2017
+ *  * bounded output range between 0 and 10000
  */
 
 #include <Encoder.h>
@@ -29,6 +31,12 @@ void loop() {
   
   long leftPos = left.read();
   long rightPos = right.read();
+
+  if(leftPos < 0) left.write(0);
+  else if(leftPos > 10000) left.write(10000);
+  if(rightPos < 0) right.write(0);
+  else if(rightPos > 10000) right.write(10000);
+  
   
   if (leftPos != leftOldPos || rightPos != rightOldPos) {
     leftOldPos = leftPos;
