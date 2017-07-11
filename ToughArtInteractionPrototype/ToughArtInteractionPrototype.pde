@@ -17,8 +17,14 @@
      * fix selector so it only touches the single underlying ball, not everything nearby
      * add serial data support for Arduino position information
      
-  v. 0.2, Jul. 7, 2017
-    add support for incoming serial position data from Arduino
+ v. 0.2, Jul. 7, 2017
+   added support for incoming serial position data from Arduino
+ 
+ v. 0.3, Jul 10, 2017
+   added grid fill
+   added object deleter (type 'c' to clear all objects so the canvas is blank again) 
+   added start of polygon builder (not yet complete)
+   
  
  */
 
@@ -29,13 +35,13 @@ import processing.serial.*;
 Serial myPort;
 
 final static ArrayList<Shape> ball = new ArrayList();
-boolean poly_bool = false;
 
 boolean serial = true;
 int wheelX, wheelY;
 
 int ballRad = 15;
 int spacing = 3;
+int polypoints = 3;
 ControlP5 cp5;
 Slider rad;
 
@@ -43,14 +49,16 @@ color back = 10; // background
 color unselected = 40;
 color selected = color(249, 252, 88);
 
-int w = 800;
-int h = 500;
+int w = 1200;
+int h = 800;
 int margin = 25;
 int Bmargin = h - margin;
 int Rmargin = w - margin;
 
+// state variable for different modes
 int shapeSelect = 0;
 
+// needed to use variables to set width and height
 void settings() {
   size(w, h);
 }
@@ -60,13 +68,13 @@ void setup() {
   cp5 = new ControlP5(this);
   cp5.addSlider("ballRad")
     .setPosition(10, 10)
-    .setRange(5, 50)
+    .setRange(5, 200)
     ;
   cp5.addSlider("spacing")
     .setPosition(10,20)
     .setRange(0,20)
     ;
-  List l = Arrays.asList("default", "row", "polygon");
+  List l = Arrays.asList("single", "row", "polygon", "grid");
   cp5.addScrollableList("shapeSelect")
     .setPosition(10, 30)
     .addItems(l)
@@ -75,7 +83,10 @@ void setup() {
      .setPosition(200,10)
      .setSize(20,10)
      ;
-    
+  cp5.addSlider("polysides")
+    .setPosition(200,20)
+    .setRange(3,10)
+    ;
   if (serial) {
     //diagnostic to list all ports
     for (int i = 0; i < Serial.list().length; i++) {
@@ -98,8 +109,9 @@ void draw() {
 }
 
 void mouseClicked() {
+  // modified by cp5 GUI menu
   switch (shapeSelect) {
-  case 1:// create circles in complete rows
+  case 1:// draw circles in complete rows
     {
       int i = 0;
       while (i*(ballRad+spacing) < Rmargin) {
@@ -109,25 +121,35 @@ void mouseClicked() {
     }
     break;
   case 2: // polygon
+    ball.add(new Shape(mouseX, mouseY, ballRad, polypoints));
+    break;
+  case 3: // grid
+    for(int i = 1; i*(ballRad+spacing) < Rmargin; i++){
+      for(int j = 1; j*(ballRad+spacing) < Bmargin; j++){
+        ball.add(new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad));
+      }
+    }
     break;
   case 0:
-  default:
+  default: // add single ball
     ball.add(new Shape(mouseX, mouseY, ballRad));
     break;
   }
 }
 
 void keyPressed() {
-  if (key==' ') {
-    for (Shape b : ball) b.resetColor();
+  if (key == ' ') for (Shape b : ball) b.resetColor();
+  if (key == 'h') cp5.hide(); // hide all GUI menus
+  if (key == 's') cp5.show(); // show all GUI menus
+  if (key == 'c') {
+    int i = 0;
+    while (i < ball.size()) ball.remove(i);
   }
-  if (key == 'h') cp5.hide();
-  if (key == 's') cp5.show();
 }
 
 class Shape
 {
-  int x, y, rad;
+  int x, y, rad, inside;
   boolean moused = false;
 
   Shape(int inx, int iny, int inrad) {
@@ -135,19 +157,29 @@ class Shape
     y = iny;
     rad = inrad;
   }
+  
+  Shape(int inx, int iny, int inrad, int inside) {
+    x = inx;
+    y = iny;
+    rad = inrad;
+    polypoints = inside;
+  }
 
   void display() {
-    if (abs(mouseX - x) < rad && abs(mouseY - y) < rad) moused = true;
-    if (moused)fill(selected);
+    //if (abs(mouseX - x) < rad/2 && abs(mouseY - y) < rad/2) moused = true;
+    if ( sq((mouseX - x)) + sq((mouseY - y)) < sq(rad)) moused = true;
+    if (moused) fill(selected);
     else fill(unselected);
-    ellipse(x, y, rad, rad);
+    if (shapeSelect == 2) polygon(x, y, ballRad, polypoints);
+    else ellipse(x, y, rad, rad);
   }
   
   void display(int wheelXin, int wheelYin) {
     if (abs(wheelXin - x) < rad && abs(wheelYin - y) < rad) moused = true;
     if (moused)fill(selected);
     else fill(unselected);
-    ellipse(x, y, rad, rad);
+    if (shapeSelect == 2) polygon(x, y, ballRad, polypoints);
+    else ellipse(x, y, rad, rad);
   }
 
   void resetColor() {
@@ -174,7 +206,7 @@ void serialEvent(Serial myPort) {
 
 
 // shamelessly stolen from the internet; not yet implemented
-void polygon(float x, float y, float radius, int npoints) {
+void polygon(int x, int y, int radius, int npoints) {
   float angle = TWO_PI / npoints;
   beginShape();
   for (float a = 0; a < TWO_PI; a += angle) {
