@@ -28,6 +28,7 @@
  
  v. crazytown Jul 12, 2017
    modified proximity test with stupid divisor
+   adding color selector, too
  
  */
 
@@ -90,6 +91,10 @@ void setup() {
     .setPosition(200,20)
     .setRange(3,10)
     ;
+  cp5.addColorWheel("selected", 400 , 10 , 200)
+    .setRGB(color(128,0,255))
+    ;
+  
   if (serial) {
     //diagnostic to list all ports
     for (int i = 0; i < Serial.list().length; i++) {
