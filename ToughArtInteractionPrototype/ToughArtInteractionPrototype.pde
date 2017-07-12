@@ -26,6 +26,9 @@
    added start of polygon builder (not yet complete)
    
  
+ v. crazytown Jul 12, 2017
+   modified proximity test with stupid divisor
+ 
  */
 
 import controlP5.*;
@@ -167,7 +170,7 @@ class Shape
 
   void display() {
     //if (abs(mouseX - x) < rad/2 && abs(mouseY - y) < rad/2) moused = true;
-    if ( sq((mouseX - x)) + sq((mouseY - y)) < sq(rad)) moused = true;
+    if ( sq((mouseX - x)) + sq((mouseY - y)) < (sq(rad))/3 ) moused = true; // the 3 divisor is totally made up
     if (moused) fill(selected);
     else fill(unselected);
     if (shapeSelect == 2) polygon(x, y, ballRad, polypoints);
