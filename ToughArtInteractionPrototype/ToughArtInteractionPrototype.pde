@@ -29,6 +29,7 @@
  modified proximity test with stupid divisor
  added color selector, too
  removed Shape.display() but preserved Shape.display(int x, int y), because the first was redundant
+ made some progress on option for gradients as colors, but not done
  
  */
 
@@ -52,6 +53,7 @@ Slider rad;
 color back = 10; // background
 color unselected = 40;
 color selected = color(249, 252, 88); // this to be modified by cp5 colorWheel below
+color gradientColor = color(249, 252, 88);
 
 int w = 1200;
 int h = 800;
@@ -61,6 +63,7 @@ int Rmargin = w - margin;
 
 // state variable for different modes
 int shapeSelect = 3; // default to grid
+int gradient = 0;
 
 // needed to use variables to set width and height
 void settings() {
@@ -87,11 +90,19 @@ void setup() {
     .setPosition(200, 10)
     .setSize(10, 10)
     ;
+  List g = Arrays.asList("none", "horizontal", "vertical");
+  cp5.addScrollableList("gradient")
+    .setPosition(200, 50)
+    .addItems(g)
+    ;
   //cp5.addSlider("polysides")
   //  .setPosition(200,20)
   //  .setRange(3,10)
   //  ;
   cp5.addColorWheel("selected", 400, 10, 200)
+    .setRGB(color(249, 252, 88))
+    ;
+  cp5.addColorWheel("gradientColor", 600, 10, 200)
     .setRGB(color(249, 252, 88))
     ;
 
@@ -146,13 +157,14 @@ void mouseClicked() {
 }
 
 void keyPressed() {
-  if (key == ' ') for (Shape b : ball) b.resetColor();
+  if (key == ' ') for (Shape b : ball) b.resetColor(); // mark every object as unselected
   if (key == 'h') cp5.hide(); // hide all GUI menus
   if (key == 's') cp5.show(); // show all GUI menus
-  if (key == 'c') {
+  if (key == 'c') { // clear board
     int i = 0;
     while (i < ball.size()) ball.remove(i);
   }
+  if (key == 'a') for (Shape b: ball) b.showColor(); // mark every object as selected
 }
 
 class Shape
@@ -172,11 +184,28 @@ class Shape
     rad = inrad;
     polypoints = inside;
   }
+  
+  color gradientizer(int xin, int yin){
+    float horizProportion = (float)x / (Rmargin - margin);
+    float vertProportion = (float)y / (Bmargin - margin);
+    float rdiff = red(selected) - red(gradientColor);
+    float gdiff = green(selected) - green(gradientColor);
+    float bdiff = blue(selected) - blue(gradientColor);
+    color hout = color(int(rdiff*horizProportion+red(selected)), int(gdiff*horizProportion+green(selected)), int(bdiff*horizProportion+blue(selected)));
+    color vout = color(int(rdiff*vertProportion+red(selected)), int(gdiff*vertProportion+green(selected)), int(bdiff*vertProportion+blue(selected)));
+    //println(hex(out));
+    if (gradient == 1) return hout;
+    else if (gradient == 2) return vout;
+    else return 0;
+  }
 
   void display(int xin, int yin) {
     //if (abs(wheelXin - x) < rad && abs(wheelYin - y) < rad) moused = true;
     if ( sq(xin - x) + sq(yin - y) < sq(rad)/3 ) moused = true; // the 3 divisor is totally made up
-    if (moused)fill(selected);
+    if (moused) {
+      if(gradient==0) fill(selected);
+      else fill(gradientizer(x, y));
+    }
     else fill(unselected);
     if (shapeSelect == 2) polygon(x, y, ballRad, polypoints);
     else ellipse(x, y, rad, rad);
@@ -184,6 +213,10 @@ class Shape
 
   void resetColor() {
     moused = false;
+  }
+  
+  void showColor(){
+    moused = true;
   }
 }
 
