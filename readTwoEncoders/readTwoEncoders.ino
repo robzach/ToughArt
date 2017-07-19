@@ -13,8 +13,12 @@
  *  * modified code to accommodate two encoders
  *  * works well with Serial Plotter
  *  * to do: bound ranges to prepare signal to be transmitted to Processing
+ *  
  * v 0.11 7 Jul. 2017
  *  * bounded output range between 0 and 10000
+ *  
+ * v 0.12 19 Jul. 2017
+ *  * added sending reset command via serial when a button is pushed
  */
 
 #include <Encoder.h>
@@ -22,8 +26,11 @@
 Encoder left(2,4);
 Encoder right(3,5);
 
+int resetButton = 7;
+
 void setup() {
   Serial.begin(9600);
+  pinMode(resetButton, INPUT_PULLUP);
 }
 
 void loop() {
@@ -45,4 +52,6 @@ void loop() {
     Serial.print(',');
     Serial.println(rightPos);
   }
+
+  if (digitalRead(resetButton) == LOW) Serial.println('r');
 }
