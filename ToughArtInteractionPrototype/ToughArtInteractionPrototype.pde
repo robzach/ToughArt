@@ -8,35 +8,39 @@
  released to the public domain by the author
  
  v. 0.1, Jul. 6, 2017
-   click to add a new ball anywhere; 
-   mouse over it to change its color; 
-   type space to reset colors;
-   type 'h' to hide size, spacing, and drawing mode selectors and 's' to show them.
-   To do: 
-   * add polygon support (define the number of sides and it does the rest)
-   * fix selector so it only touches the single underlying ball, not everything nearby
-   * add serial data support for Arduino position information
+ click to add a new ball anywhere; 
+ mouse over it to change its color; 
+ type space to reset colors;
+ type 'h' to hide size, spacing, and drawing mode selectors and 's' to show them.
+ To do: 
+ * add polygon support (define the number of sides and it does the rest)
+ * fix selector so it only touches the single underlying ball, not everything nearby
+ * add serial data support for Arduino position information
  
  v. 0.2, Jul. 7, 2017
-   added support for incoming serial position data from Arduino
+ added support for incoming serial position data from Arduino
  
  v. 0.3, Jul 10, 2017
-   added grid fill
-   added object deleter (type 'c' to clear all objects so the canvas is blank again) 
-   added start of polygon builder (not yet complete)
+ added grid fill
+ added object deleter (type 'c' to clear all objects so the canvas is blank again) 
+ added start of polygon builder (not yet complete)
  
  v. crazytown Jul 12, 2017 (now ahead of some of the changes on the multimaster branch and will probably need to manually merge later)
-   modified proximity test with stupid divisor
-   added color selector, too
-   removed Shape.display() but preserved Shape.display(int x, int y), because the first was redundant
-   made some progress on option for gradients as colors, but not done
+ modified proximity test with stupid divisor
+ added color selector, too
+ removed Shape.display() but preserved Shape.display(int x, int y), because the first was redundant
+ made some progress on option for gradients as colors, but not done
  
  v. 0.5 Jul 13, 2017
-   I didn't make any contemporaneous notes on this update so I don't know what changed.
-   
+ I didn't make any contemporaneous notes on this update so I don't know what changed.
+ 
  v. 0.6 Jul 19, 2017
-   added slider for cursor size (cursorRad) since it was too small to see sometimes
-   added serial reset command; if character 'r' is transmitted, will perform reset
+ added slider for cursor size (cursorRad) since it was too small to see sometimes
+ added serial reset command; if character 'r' is transmitted, will perform reset
+ 
+ v. 0.65 Jul 19, 2017
+ IN PROGRESS add hexagon grid (honeycomb) pattern
+ (committing to master so I can make a development branch without disturbing the code that's presently running)
  
  */
 
@@ -90,9 +94,9 @@ void setup() {
     ;
   cp5.addSlider("spacing")
     .setPosition(10, 20)
-    .setRange(0, 20)
+    .setRange(0, 50)
     ;
-  List l = Arrays.asList("single", "row", "polygon", "grid");
+  List l = Arrays.asList("single", "row", "polygon", "grid", "honeycomb");
   cp5.addScrollableList("shapeSelect")
     .setPosition(10, 40)
     .addItems(l)
@@ -140,7 +144,7 @@ void draw() {
     fill(0, 255, 255); // cursor marker color
     ellipse(wheelX, wheelY, cursorRad, cursorRad); // cursor marker
   }
-  
+
   if (shapeSelect == 3 && debugDisplay) {
     String msg = "rows:" + rows + ", cols:" + cols;
     fill(255);
@@ -161,7 +165,7 @@ void mouseClicked() {
     }
     break;
   case 2: // polygon
-    ball.add(new Shape(mouseX, mouseY, ballRad, polypoints));
+    ball.add(new Shape(mouseX, mouseY, ballRad, polypoints, false));
     break;
   case 3: // grid
     for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
@@ -169,6 +173,23 @@ void mouseClicked() {
         ball.add(new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad));
         rows = i;
         cols = j;
+      }
+    }
+    break;
+  case 4: // honeycomb
+    // draw odd rows first
+    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
+      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
+        if (j % 2 == 1) ball.add(new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad, 6, false));
+        ////// worry about counting totals later
+        //rows = i;
+        //cols = j;
+      }
+    }
+    // draw even rows so they nest properly, indented by half of ballRad
+    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
+      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
+        if (j % 2 == 0) ball.add(new Shape(i*(ballRad+spacing)+(int(ballRad/2)), j*(ballRad+spacing), ballRad, 6, false)); // SWITCH TO TRUE TO ROTATE
       }
     }
     break;
@@ -200,6 +221,7 @@ class Shape
 {
   int x, y, rad, inside;
   boolean moused = false;
+  boolean rot = false;
 
   Shape(int inx, int iny, int inrad) {
     x = inx;
@@ -207,11 +229,12 @@ class Shape
     rad = inrad;
   }
 
-  Shape(int inx, int iny, int inrad, int inside) {
+  Shape(int inx, int iny, int inrad, int inside, boolean inrot) {
     x = inx;
     y = iny;
     rad = inrad;
     polypoints = inside;
+    rot = inrot;    
   }
 
   color gradientizer(int xin, int yin) {
@@ -235,7 +258,8 @@ class Shape
       if (gradient==0) fill(selected);
       else fill(gradientizer(x, y));
     } else fill(unselected);
-    if (shapeSelect == 2) polygon(x, y, ballRad, polypoints);
+
+    if (shapeSelect == 2 || shapeSelect == 4) polygon(x, y, ballRad, polypoints, rot);
     else ellipse(x, y, rad, rad);
   }
 
@@ -254,7 +278,7 @@ void serialEvent(Serial myPort) {
   String inString = myPort.readStringUntil(10);
   if (inString != null) {
     inString = trim(inString);
-    for (int i = 0; i < inString.length(); i++){ // look for 'r' in string (reset flag)
+    for (int i = 0; i < inString.length(); i++) { // look for 'r' in string (reset flag)
       char c = inString.charAt(i);
       if (c == 'r') {
         for (Shape b : ball) b.resetColor();
@@ -273,9 +297,13 @@ void serialEvent(Serial myPort) {
 
 
 
-// shamelessly stolen from the internet; not yet implemented
-void polygon(int x, int y, int radius, int npoints) {
+// shamelessly stolen from the internet and modified a bit
+void polygon(int x, int y, int radius, int npoints, boolean rotate) {
   float angle = TWO_PI / npoints;
+  if (rotate) {
+    pushMatrix();
+    rotate(angle/2);
+  }
   beginShape();
   for (float a = 0; a < TWO_PI; a += angle) {
     float sx = x + cos(a) * radius;
@@ -283,4 +311,5 @@ void polygon(int x, int y, int radius, int npoints) {
     vertex(sx, sy);
   }
   endShape(CLOSE);
+  if (rotate) popMatrix();
 }
