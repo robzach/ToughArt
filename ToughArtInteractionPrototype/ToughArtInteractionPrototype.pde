@@ -42,6 +42,9 @@
  IN PROGRESS add hexagon grid (honeycomb) pattern
  (committing to master so I can make a development branch without disturbing the code that's presently running)
  
+ v. 0.66 Jul 27, 2017
+ added ability to save out settings (press 's') and load them in (press 'l')
+ 
  */
 
 import controlP5.*;
@@ -215,6 +218,8 @@ void keyPressed() {
     while (i < ball.size()) ball.remove(i);
   }
   if (key == 'a') for (Shape b : ball) b.showColor(); // mark every object as selected
+  if (key == 's') cp5.saveProperties(); // save out controlP5 settings to JSON
+  if (key == 'l') cp5.loadProperties(); // load saved properties
 }
 
 class Shape
