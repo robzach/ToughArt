@@ -5,18 +5,25 @@
     "value": 8
   },
   "/ballRad": {
-    "min": 5,
+    "min": 15,
     "max": 200,
-    "value": 10
+    "value": 15
   },
-  "/shapeSelect": {"value": 3},
-  "/serial": {"value": 0},
-  "/gradient": {"value": 0},
-  "/gradientColor": {"arrayValue": []},
+  "/serial": {"value": 1},
+  "/polypoints": {
+    "min": 3,
+    "max": 7,
+    "value": 3
+  },
   "/spacing": {
     "min": 0,
     "max": 50,
     "value": 0
   },
-  "/selected": {"arrayValue": []}
+  "/selected": {"arrayValue": []},
+  "/gridSkewInput": {
+    "min": 0,
+    "max": 100,
+    "value": 0
+  }
 }
