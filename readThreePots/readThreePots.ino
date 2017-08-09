@@ -1,14 +1,33 @@
 /*
- * read the values of three pots and report them via serial if they change by more than a specified amount
+ * read the values of three pots and two encoders, 
+ * and report them via serial if any change by more than a specified amount
+ * 
+ * serial output should be:
+ * leftwheel,rightwheel,ballRad,polypoints,gridSkew
+ * 
+ * leftwheel and rightwheel have ranges 0–10000
+ * ballRad has range 10–200
+ * polyPoints has range 3–7
+ * gridSkew has range 0–100
  * 
  * v 0.1 8-2-17
  *  first version
+ *  
+ * v 0.2 8-9-17
+ *  merging with readTwoEncoders
+ *  adding appropriate ranges for output values
+ *  this needs revision but was done in a hurry
  * 
  * Robert Zacharias
  * rz@rzach.me
  * 
  * released to the public domain by the author
  */
+
+#include <Encoder.h>
+
+Encoder left(2,4);
+Encoder right(3,5);
 
 int val[3], oldval[3];
 bool change = true;
@@ -23,19 +42,8 @@ void setup() {
 }
 
 void loop() {
-  check();
-  if (change) {
-    for (int i = 0; i < 3; i++) {
-      Serial.print(val[i]);
-      if (i < 2) Serial.print(',');
-    }
-    Serial.println();
-  }
-}
 
-void check(){
-  
-  // read three pots
+// read three pots
   for (int i = 0; i < 3; i++) {
     val[i] = analogRead(i + 14);
     delay(1);
@@ -50,7 +58,43 @@ void check(){
     else change = false;
   }
 
+  static long leftOldPos, rightOldPos;
+  
+  long leftPos = left.read();
+  long rightPos = right.read();
+
+  if(leftPos < 0) left.write(0);
+  else if(leftPos > 10000) left.write(10000);
+  if(rightPos < 0) right.write(0);
+  else if(rightPos > 10000) right.write(10000);
+
+  if (leftPos != leftOldPos || rightPos != rightOldPos) {
+    leftOldPos = leftPos;
+    rightOldPos = rightPos;
+    change = true;
+  }
+
   // record new values as old
   for (int i = 0; i<3; i++) oldval[i] = val[i];
+
+ 
+  if (change) {
+    Serial.print(leftPos);
+    Serial.print(',');
+    Serial.print(rightPos);
+    Serial.print(',');
+    for (int i = 0; i < 3; i++) {
+      Serial.print(val[i]);
+      if (i < 2) Serial.print(',');
+    }
+    Serial.println();
+  }
+
+
+}
+
+void check(){
+  
+  
 }
 
