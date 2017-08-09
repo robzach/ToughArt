@@ -45,10 +45,12 @@
  v. 0.66 Jul 27, 2017
  added ability to save out settings (press 's') and load them in (press 'l')
  
- v. 0.7b slideSwitches branch Aug 8, 2017
+ v. 0.7b slideSwitches branch Aug 9, 2017
  IN PROGRESS interpreting 5 data points coming from the Arduino
- IN PROGRESS fixing proximity scan function of each ball so it doesn't do too many scans unnecessarily (thanks Madeline Gannon)
- changed position containers to PVectors (thanks again to Madeline)
+ changed position containers to PVectors (thanks Madeline Gannon)
+ fixed proximity scan function of each ball so it doesn't do too many scans unnecessarily (thanks again Madeline)
+ IN PROGRESS using a 2d array to hold the ball objects, they still cannot be resized live
+ 
  
  */
 
@@ -58,13 +60,21 @@ import processing.serial.*;
 
 Serial myPort;
 
-final static ArrayList<Shape> ball = new ArrayList();
+//final static ArrayList<Shape> ball = new ArrayList();
+
+Shape[][] ballgrid;
+int cols = 40;
+int rows= 15;
+
+//Shape ball;
+
+
 
 boolean serial = true;
 boolean debugDisplay = true;
 int wheelX, wheelY;
 
-int ballRad = 30;
+int ballRad = 45;
 int spacing = 3;
 int cursorRad = 8;
 int polypoints = 3;
@@ -83,7 +93,7 @@ int margin = 25;
 int Bmargin = h - margin;
 int Rmargin = w - margin;
 
-int rows, cols; // globals to store number of rows and cols of grid, which are generated inside mouseClicked()
+//int rows, cols; // globals to store number of rows and cols of grid, which are generated inside mouseClicked()
 
 // state variable for different modes
 int shapeSelect = 3; // default to grid
@@ -142,73 +152,81 @@ void setup() {
     String portName = Serial.list()[6]; // may have to change this number later
     myPort = new Serial(this, portName, 9600);
   }
+  
+  //ball = new Shape(100,100,100);
+  
+  //ball = new Shape(100,100,50);
+  //for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
+  //    for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
+  //      ball.add(new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad));
+  //      rows = i;
+  //      cols = j;
+  //    }
+  //  }
+  
+  
+  ballgrid = new Shape[cols][rows];
+  for (int i = 0; i < cols; i++) {
+    for (int j = 0; j < rows; j++) {
+      // Initialize each object
+      ballgrid[i][j] = new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad);
+    }
+  }
 }
+
+  
+
 
 void draw() {
   background(back);
-
-  if (!serial) for (Shape b : ball) b.display(mouseX, mouseY);
-  else {
-    for (Shape b : ball) b.display(wheelX, wheelY);
-    fill(0, 255, 255); // cursor marker color
-    ellipse(wheelX, wheelY, cursorRad, cursorRad); // cursor marker
+  
+  //ball.display(mouseX,mouseY);
+  
+  //for (Shape b : ball) b.display(mouseX, mouseY);
+  
+  for (int i = 0; i < cols; i++) {
+    for (int j = 0; j < rows; j++) {
+      ballgrid[i][j].display(mouseX,mouseY);
+    }
   }
 
-  if (shapeSelect == 3 && debugDisplay) {
-    String msg = "rows:" + rows + ", cols:" + cols;
-    fill(255);
-    text(msg, 10, height-10);
+  //if (!serial) for (Shape b : grid) b.display(mouseX, mouseY);
+  //else {
+  //  for (Shape b : ball) b.display(wheelX, wheelY);
+  //  fill(0, 255, 255); // cursor marker color
+  //  ellipse(wheelX, wheelY, cursorRad, cursorRad); // cursor marker
+  //}
+
+  //if (shapeSelect == 3 && debugDisplay) {
+  //  String msg = "rows:" + rows + ", cols:" + cols;
+  //  fill(255);
+  //  text(msg, 10, height-10);
+  //}
+  
+  //noFill();
+  //stroke(255);
+  //ellipse(mouseX, mouseY, ballRad, ballRad);
+  //noStroke();
+  
+}
+
+
+//void keyPressed(){
+//  if (key == 'a') ball.showColor();
+//}
+
+void keyPressed(){
+  if (key == ' '){
+    for (int i = 0; i < cols; i++) {
+      for (int j = 0; j < rows; j++) {
+        // Initialize each object
+        ballgrid[i][j].resetColor();
+      }
+    }
   }
 }
 
-void mouseClicked() {
-  // modified by cp5 GUI menu
-  switch (shapeSelect) {
-  case 1:// draw circles in complete rows
-    {
-      int i = 0;
-      while (i*(ballRad+spacing) < Rmargin) {
-        if (i*(ballRad+spacing) > margin) ball.add(new Shape(i*(ballRad+spacing), mouseY, ballRad));
-        i++;
-      }
-    }
-    break;
-  case 2: // polygon
-    ball.add(new Shape(mouseX, mouseY, ballRad, polypoints, false));
-    break;
-  case 3: // grid
-    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-        ball.add(new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad));
-        rows = i;
-        cols = j;
-      }
-    }
-    break;
-  case 4: // honeycomb
-    // draw odd rows first
-    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-        if (j % 2 == 1) ball.add(new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad, 6, false));
-        ////// worry about counting totals later
-        //rows = i;
-        //cols = j;
-      }
-    }
-    // draw even rows so they nest properly, indented by half of ballRad
-    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-        if (j % 2 == 0) ball.add(new Shape(i*(ballRad+spacing)+(int(ballRad/2)), j*(ballRad+spacing), ballRad, 6, false)); // SWITCH TO TRUE TO ROTATE
-      }
-    }
-    break;
-  case 0:
-  default: // add single ball
-    ball.add(new Shape(mouseX, mouseY, ballRad));
-    break;
-  }
-}
-
+/*
 void keyPressed() {
   if (key == ' ') for (Shape b : ball) b.resetColor(); // mark every object as unselected
   if (key == 'h') {
@@ -227,6 +245,7 @@ void keyPressed() {
   if (key == 's') cp5.saveProperties(); // save out controlP5 settings to JSON
   if (key == 'l') cp5.loadProperties(); // load saved properties
 }
+*/
 
 class Shape
 {
@@ -236,7 +255,7 @@ class Shape
   PVector pos;
 
   Shape(int inx, int iny, int inrad) {
-    PVector pos = new PVector(inx, iny);
+    pos = new PVector(inx, iny);
     //pos.x = inx;
     //pos.y = iny;
     rad = inrad;
@@ -250,35 +269,22 @@ class Shape
     rot = inrot;    
   }
 
-  color gradientizer(int xin, int yin) {
-    float horizProportion = (float)x / (Rmargin - margin);
-    float vertProportion = (float)y / (Bmargin - margin);
-    float rdiff = red(selected) - red(gradientColor);
-    float gdiff = green(selected) - green(gradientColor);
-    float bdiff = blue(selected) - blue(gradientColor);
-    color hout = color(int(rdiff*horizProportion+red(selected)), int(gdiff*horizProportion+green(selected)), int(bdiff*horizProportion+blue(selected)));
-    color vout = color(int(rdiff*vertProportion+red(selected)), int(gdiff*vertProportion+green(selected)), int(bdiff*vertProportion+blue(selected)));
-    //println(hex(out));
-    if (gradient == 1) return hout;
-    else if (gradient == 2) return vout;
-    else return 0;
-  }
-
   void display(int xin, int yin) {
-    PVector mousePos = new PVector(mouseX, mouseY);
+    PVector mousePos = new PVector(xin, yin);
     
-    //if (abs(wheelXin - x) < rad && abs(wheelYin - y) < rad) moused = true;
-    //if ( sq(xin - x) + sq(yin - y) < sq(rad)/3 ) moused = true; // the 3 divisor is totally made up
     float d = PVector.dist(pos, mousePos);
-    if (d < ballRad) moused = true;
+    if ((int)d < ballRad/2) moused = true;
     if (moused) {
       if (gradient==0) fill(selected);
-      else fill(gradientizer(x, y));
+      //else fill(gradientizer(x, y));
     } 
     else fill(unselected);
 
     if (shapeSelect == 2 || shapeSelect == 4) polygon(x, y, ballRad, polypoints, rot);
-    else ellipse(x, y, rad, rad);
+    //else ellipse(pos.x, pos.y, rad, rad);
+    
+    ellipse(pos.x, pos.y, rad, rad);
+    
   }
 
   void resetColor() {
@@ -289,6 +295,8 @@ class Shape
     moused = true;
   }
 }
+
+/*
 
 // from http://www.interactiondesign.se/wiki/courses:intro.prototyping.spring.2015.jan19_20_21
 // though I had to change the second line to use readStringUntil() to make it actually work
@@ -317,7 +325,7 @@ void serialEvent(Serial myPort) {
   }
 }
 
-
+*/
 
 // shamelessly stolen from the internet and modified a bit
 void polygon(int x, int y, int radius, int npoints, boolean rotate) {

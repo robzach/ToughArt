@@ -7,7 +7,7 @@
   "/ballRad": {
     "min": 5,
     "max": 200,
-    "value": 85.75757598876953
+    "value": 30.606060028076172
   },
   "/shapeSelect": {"value": 3},
   "/serial": {"value": 1},
