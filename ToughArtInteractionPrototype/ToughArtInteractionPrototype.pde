@@ -49,8 +49,12 @@
  IN PROGRESS interpreting 5 data points coming from the Arduino
  changed position containers to PVectors (thanks Madeline Gannon)
  fixed proximity scan function of each ball so it doesn't do too many scans unnecessarily (thanks again Madeline)
- IN PROGRESS using a 2d array to hold the ball objects, they still cannot be resized live
- IN PROGRESS ball array can be resized in space but mouseover isn't working quite right
+ using a 2d array to hold the ball objects, can be resized live
+ ball array can be resized in space but mouseover isn't working quite right
+ 
+ v. 0.8 slideSwitches branch Aug 9, 2017
+ ball array can be live resized with correct mouseover coloring
+ TO DO: test with live Arduino input
  
  
  */
@@ -64,8 +68,6 @@ Serial myPort;
 //final static ArrayList<Shape> ball = new ArrayList();
 
 Shape[][] ballgrid;
-int cols = 40;
-int rows= 30;
 
 //Shape ball;
 
@@ -75,8 +77,8 @@ boolean serial = false;
 boolean debugDisplay = true;
 int wheelX, wheelY;
 
-int ballRad = 45;
-int spacing = 3;
+int ballRad = 10;
+int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
 int gridSkew = 0;
@@ -165,7 +167,8 @@ void setup() {
   //    }
   //  }
 
-
+  int cols = width/(ballRad+spacing);
+  int rows= height/(ballRad+spacing);
   ballgrid = new Shape[cols][rows];
 
   for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
@@ -269,10 +272,11 @@ class Shape
     rot = inrot;
   }
 
-  void display(int xpos, int ypos, int xin, int yin) {
+  void display(int dotxpos, int dotypos, int xin, int yin) {
     PVector mousePos = new PVector(xin, yin);
-
-    float d = PVector.dist(pos, mousePos);
+    PVector dotPos = new PVector(dotxpos, dotypos);
+    
+    float d = PVector.dist(dotPos, mousePos);
     if ((int)d < ballRad/2) moused = true;
     if (moused) {
       if (gradient==0) fill(selected);
@@ -282,7 +286,7 @@ class Shape
     if (shapeSelect == 2 || shapeSelect == 4) polygon(x, y, ballRad, polypoints, rot);
     //else ellipse(pos.x, pos.y, rad, rad);
 
-    ellipse(xpos, ypos, rad, rad);
+    ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
   }
 
   void resetColor() {
