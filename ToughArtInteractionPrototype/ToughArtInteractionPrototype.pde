@@ -64,13 +64,13 @@ Serial myPort;
 
 Shape[][] ballgrid;
 int cols = 40;
-int rows= 15;
+int rows= 30;
 
 //Shape ball;
 
 
 
-boolean serial = true;
+boolean serial = false;
 boolean debugDisplay = true;
 int wheelX, wheelY;
 
@@ -166,8 +166,9 @@ void setup() {
   
   
   ballgrid = new Shape[cols][rows];
-  for (int i = 0; i < cols; i++) {
-    for (int j = 0; j < rows; j++) {
+  
+  for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
+    for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
       // Initialize each object
       ballgrid[i][j] = new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad);
     }
@@ -184,8 +185,8 @@ void draw() {
   
   //for (Shape b : ball) b.display(mouseX, mouseY);
   
-  for (int i = 0; i < cols; i++) {
-    for (int j = 0; j < rows; j++) {
+  for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
+    for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
       ballgrid[i][j].display(mouseX,mouseY);
     }
   }
