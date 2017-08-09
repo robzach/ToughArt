@@ -45,11 +45,12 @@
  v. 0.66 Jul 27, 2017
  added ability to save out settings (press 's') and load them in (press 'l')
  
- v. 0.7b slideSwitches branch Aug 9, 2017
+ v. 0.71 slideSwitches branch Aug 9, 2017
  IN PROGRESS interpreting 5 data points coming from the Arduino
  changed position containers to PVectors (thanks Madeline Gannon)
  fixed proximity scan function of each ball so it doesn't do too many scans unnecessarily (thanks again Madeline)
  IN PROGRESS using a 2d array to hold the ball objects, they still cannot be resized live
+ IN PROGRESS ball array can be resized in space but mouseover isn't working quite right
  
  
  */
@@ -152,9 +153,9 @@ void setup() {
     String portName = Serial.list()[6]; // may have to change this number later
     myPort = new Serial(this, portName, 9600);
   }
-  
+
   //ball = new Shape(100,100,100);
-  
+
   //ball = new Shape(100,100,50);
   //for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
   //    for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
@@ -163,10 +164,10 @@ void setup() {
   //      cols = j;
   //    }
   //  }
-  
-  
+
+
   ballgrid = new Shape[cols][rows];
-  
+
   for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
     for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
       // Initialize each object
@@ -175,19 +176,19 @@ void setup() {
   }
 }
 
-  
+
 
 
 void draw() {
   background(back);
-  
+
   //ball.display(mouseX,mouseY);
-  
+
   //for (Shape b : ball) b.display(mouseX, mouseY);
-  
+
   for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
     for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-      ballgrid[i][j].display(mouseX,mouseY);
+      ballgrid[i][j].display(i*(ballRad+spacing), j*(ballRad+spacing), mouseX, mouseY);
     }
   }
 
@@ -203,12 +204,11 @@ void draw() {
   //  fill(255);
   //  text(msg, 10, height-10);
   //}
-  
-  //noFill();
-  //stroke(255);
-  //ellipse(mouseX, mouseY, ballRad, ballRad);
-  //noStroke();
-  
+
+  noFill();
+  stroke(255);
+  ellipse(mouseX, mouseY, ballRad, ballRad);
+  noStroke();
 }
 
 
@@ -216,11 +216,10 @@ void draw() {
 //  if (key == 'a') ball.showColor();
 //}
 
-void keyPressed(){
-  if (key == ' '){
-    for (int i = 0; i < cols; i++) {
-      for (int j = 0; j < rows; j++) {
-        // Initialize each object
+void keyPressed() {
+  if (key == ' ') {
+    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
+      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
         ballgrid[i][j].resetColor();
       }
     }
@@ -229,24 +228,24 @@ void keyPressed(){
 
 /*
 void keyPressed() {
-  if (key == ' ') for (Shape b : ball) b.resetColor(); // mark every object as unselected
-  if (key == 'h') {
-    cp5.hide(); // hide all GUI menus
-    debugDisplay = false;
-  }
-  if (key == 's') {
-    cp5.show(); // show all GUI menus
-    debugDisplay = true;
-  }
-  if (key == 'c') { // clear board
-    int i = 0;
-    while (i < ball.size()) ball.remove(i);
-  }
-  if (key == 'a') for (Shape b : ball) b.showColor(); // mark every object as selected
-  if (key == 's') cp5.saveProperties(); // save out controlP5 settings to JSON
-  if (key == 'l') cp5.loadProperties(); // load saved properties
-}
-*/
+ if (key == ' ') for (Shape b : ball) b.resetColor(); // mark every object as unselected
+ if (key == 'h') {
+ cp5.hide(); // hide all GUI menus
+ debugDisplay = false;
+ }
+ if (key == 's') {
+ cp5.show(); // show all GUI menus
+ debugDisplay = true;
+ }
+ if (key == 'c') { // clear board
+ int i = 0;
+ while (i < ball.size()) ball.remove(i);
+ }
+ if (key == 'a') for (Shape b : ball) b.showColor(); // mark every object as selected
+ if (key == 's') cp5.saveProperties(); // save out controlP5 settings to JSON
+ if (key == 'l') cp5.loadProperties(); // load saved properties
+ }
+ */
 
 class Shape
 {
@@ -267,25 +266,23 @@ class Shape
     y = iny;
     rad = inrad;
     polypoints = inside;
-    rot = inrot;    
+    rot = inrot;
   }
 
-  void display(int xin, int yin) {
+  void display(int xpos, int ypos, int xin, int yin) {
     PVector mousePos = new PVector(xin, yin);
-    
+
     float d = PVector.dist(pos, mousePos);
     if ((int)d < ballRad/2) moused = true;
     if (moused) {
       if (gradient==0) fill(selected);
       //else fill(gradientizer(x, y));
-    } 
-    else fill(unselected);
+    } else fill(unselected);
 
     if (shapeSelect == 2 || shapeSelect == 4) polygon(x, y, ballRad, polypoints, rot);
     //else ellipse(pos.x, pos.y, rad, rad);
-    
-    ellipse(pos.x, pos.y, rad, rad);
-    
+
+    ellipse(xpos, ypos, rad, rad);
   }
 
   void resetColor() {
@@ -299,34 +296,34 @@ class Shape
 
 /*
 
-// from http://www.interactiondesign.se/wiki/courses:intro.prototyping.spring.2015.jan19_20_21
-// though I had to change the second line to use readStringUntil() to make it actually work
-void serialEvent(Serial myPort) {
-  String inString = myPort.readStringUntil(10);
-  if (inString != null) {
-    inString = trim(inString);
-    for (int i = 0; i < inString.length(); i++) { // look for 'r' in string (reset flag)
-      char c = inString.charAt(i);
-      if (c == 'r') {
-        for (Shape b : ball) b.resetColor();
-        return;
-      }
-    }
-    String values [] = split(inString, ',');
-    if (values.length>1) {
-      wheelX = int(values[0]); // range 0–10000
-      wheelY = int(values[1]); // range 0–10000
-      ballRad = int(values[2]); // range 5–200
-      polypoints = int(values[3]); // range 3–7
-      gridSkew = int(values[4]); // range 0–100
-      
-      wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
-      wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
-    }
-  }
-}
-
-*/
+ // from http://www.interactiondesign.se/wiki/courses:intro.prototyping.spring.2015.jan19_20_21
+ // though I had to change the second line to use readStringUntil() to make it actually work
+ void serialEvent(Serial myPort) {
+ String inString = myPort.readStringUntil(10);
+ if (inString != null) {
+ inString = trim(inString);
+ for (int i = 0; i < inString.length(); i++) { // look for 'r' in string (reset flag)
+ char c = inString.charAt(i);
+ if (c == 'r') {
+ for (Shape b : ball) b.resetColor();
+ return;
+ }
+ }
+ String values [] = split(inString, ',');
+ if (values.length>1) {
+ wheelX = int(values[0]); // range 0–10000
+ wheelY = int(values[1]); // range 0–10000
+ ballRad = int(values[2]); // range 5–200
+ polypoints = int(values[3]); // range 3–7
+ gridSkew = int(values[4]); // range 0–100
+ 
+ wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
+ wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
+ }
+ }
+ }
+ 
+ */
 
 // shamelessly stolen from the internet and modified a bit
 void polygon(int x, int y, int radius, int npoints, boolean rotate) {
