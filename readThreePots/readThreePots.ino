@@ -1,33 +1,41 @@
 /*
- * read the values of three pots and two encoders, 
- * and report them via serial if any change by more than a specified amount
- * 
- * serial output should be:
- * leftwheel,rightwheel,ballRad,polypoints,gridSkew
- * 
- * leftwheel and rightwheel have ranges 0–10000
- * ballRad has range 10–200
- * polyPoints has range 3–7
- * gridSkew has range 0–100
- * 
- * v 0.1 8-2-17
- *  first version
- *  
- * v 0.2 8-9-17
- *  merging with readTwoEncoders
- *  adding appropriate ranges for output values
- *  this needs revision but was done in a hurry
- * 
- * Robert Zacharias
- * rz@rzach.me
- * 
- * released to the public domain by the author
- */
+   read the values of three pots and two encoders,
+   and report them via serial if any change by more than a specified amount
+
+   serial output should be:
+   leftwheel,rightwheel,ballRad,polypoints,gridSkew
+
+   leftwheel and rightwheel have ranges 0–10000
+   ballRad has range 10–200
+   polyPoints has range 3–7
+   gridSkew has range 0–100
+
+   ballRad pot on A0, polyPoints pot on A1, gridSkew on A2
+
+   v 0.1 8-2-17
+    first version
+
+   v 0.2 8-9-17
+    merging with readTwoEncoders
+    adding appropriate ranges for output values
+    this needs revision but was done in a hurry
+
+   v 0.21 8-9-17
+    minor restructuring; added reset button on pin 7 which I'd forgotten about
+    tested and is outputting correct serial data
+
+   Robert Zacharias
+   rz@rzach.me
+
+   released to the public domain by the author
+*/
 
 #include <Encoder.h>
 
-Encoder left(2,4);
-Encoder right(3,5);
+Encoder left(2, 4);
+Encoder right(3, 5);
+
+int resetButton = 7;
 
 int val[3], oldval[3];
 bool change = true;
@@ -35,23 +43,24 @@ int slop = 1; // minimum change to detect
 
 void setup() {
   Serial.begin(9600);
-  for (int i = 14; i<17; i++){ // A0 is pin 14, A1 is 15, A2 is 16
+  for (int i = 14; i < 17; i++) { // A0 is pin 14, A1 is 15, A2 is 16
     pinMode(i, INPUT);
   }
-  for (int i = 0; i<3; i++) oldval[i] = analogRead(i+14); // load initial values
+  for (int i = 0; i < 3; i++) oldval[i] = analogRead(i + 14); // load initial values
+  pinMode(resetButton, INPUT_PULLUP);
 }
 
 void loop() {
 
-// read three pots
+  // read three pots
   for (int i = 0; i < 3; i++) {
     val[i] = analogRead(i + 14);
     delay(1);
   }
 
   // compare to old values
-  for (int i = 0; i<3; i++){
-    if (abs(val[i] - oldval[i]) > slop){
+  for (int i = 0; i < 3; i++) {
+    if (abs(val[i] - oldval[i]) > slop) {
       change = true;
       break;
     }
@@ -59,14 +68,14 @@ void loop() {
   }
 
   static long leftOldPos, rightOldPos;
-  
+
   long leftPos = left.read();
   long rightPos = right.read();
 
-  if(leftPos < 0) left.write(0);
-  else if(leftPos > 10000) left.write(10000);
-  if(rightPos < 0) right.write(0);
-  else if(rightPos > 10000) right.write(10000);
+  if (leftPos < 0) left.write(0);
+  else if (leftPos > 10000) left.write(10000);
+  if (rightPos < 0) right.write(0);
+  else if (rightPos > 10000) right.write(10000);
 
   if (leftPos != leftOldPos || rightPos != rightOldPos) {
     leftOldPos = leftPos;
@@ -75,26 +84,28 @@ void loop() {
   }
 
   // record new values as old
-  for (int i = 0; i<3; i++) oldval[i] = val[i];
+  for (int i = 0; i < 3; i++) oldval[i] = val[i];
 
- 
+
   if (change) {
+    int ballRad = map(val[0],0,1023,10,200);
+    int polyPoints = map(val[1],0,1000,3,7);
+    int gridSkew = map(val[2],0,1023,0,100);
+    
     Serial.print(leftPos);
     Serial.print(',');
     Serial.print(rightPos);
     Serial.print(',');
-    for (int i = 0; i < 3; i++) {
-      Serial.print(val[i]);
-      if (i < 2) Serial.print(',');
-    }
-    Serial.println();
+    Serial.print(ballRad);
+    Serial.print(',');
+    Serial.print(polyPoints);
+    Serial.print(',');
+    Serial.println(gridSkew);
+        
+    change = false;
   }
 
+  if (digitalRead(resetButton) == LOW) Serial.println('r');
 
-}
-
-void check(){
-  
-  
 }
 
