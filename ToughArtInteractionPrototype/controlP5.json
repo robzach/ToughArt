@@ -7,16 +7,16 @@
   "/ballRad": {
     "min": 5,
     "max": 200,
-    "value": 30.606060028076172
+    "value": 10
   },
   "/shapeSelect": {"value": 3},
-  "/serial": {"value": 1},
+  "/serial": {"value": 0},
   "/gradient": {"value": 0},
   "/gradientColor": {"arrayValue": []},
   "/spacing": {
     "min": 0,
     "max": 50,
-    "value": 3
+    "value": 0
   },
   "/selected": {"arrayValue": []}
 }

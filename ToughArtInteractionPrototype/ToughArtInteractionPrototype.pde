@@ -56,6 +56,15 @@
  ball array can be live resized with correct mouseover coloring
  TO DO: test with live Arduino input
  
+ v. 0.81 slideSwitches branch Aug 9, 2017
+ brought back previous keyboard commands that had been commented out
+ removed old code no longer used
+ added gridSkew (to slide between grid and honeycomb)
+ can select polygon side counts
+ GOOD SUGGESTION FROM BJORN: colors fade over time
+ 
+ 
+ 
  
  */
 
@@ -66,12 +75,8 @@ import processing.serial.*;
 Serial myPort;
 
 //final static ArrayList<Shape> ball = new ArrayList();
-
-Shape[][] ballgrid;
-
 //Shape ball;
-
-
+Shape[][] ballgrid;
 
 boolean serial = false;
 boolean debugDisplay = true;
@@ -81,7 +86,7 @@ int ballRad = 10;
 int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
-int gridSkew = 0;
+int gridSkewInput = 0;
 ControlP5 cp5;
 Slider rad;
 
@@ -112,40 +117,44 @@ void setup() {
   cp5 = new ControlP5(this);
   cp5.addSlider("ballRad")
     .setPosition(10, 10)
-    .setRange(5, 200)
+    .setRange(10, 200)
     ;
   cp5.addSlider("spacing")
     .setPosition(10, 20)
     .setRange(0, 50)
     ;
-  List l = Arrays.asList("single", "row", "polygon", "grid", "honeycomb");
-  cp5.addScrollableList("shapeSelect")
-    .setPosition(10, 40)
-    .addItems(l)
-    ;
+  //List l = Arrays.asList("single", "row", "polygon", "grid", "honeycomb");
+  //cp5.addScrollableList("shapeSelect")
+  //  .setPosition(10, 60)
+  //  .addItems(l)
+  //  ;
   cp5.addSlider("cursorRad")
     .setPosition(10, 30)
     .setRange(1, 30)
+    ;
+  cp5.addSlider("gridSkewInput")
+    .setPosition(10, 50)
+    .setRange(0, 100)
     ;
   cp5.addToggle("serial")
     .setPosition(200, 10)
     .setSize(10, 10)
     ;
-  List g = Arrays.asList("none", "horizontal", "vertical");
-  cp5.addScrollableList("gradient")
-    .setPosition(200, 50)
-    .addItems(g)
-    ;
-  //cp5.addSlider("polysides")
-  //  .setPosition(200,20)
-  //  .setRange(3,10)
+  //List g = Arrays.asList("none", "horizontal", "vertical");
+  //cp5.addScrollableList("gradient")
+  //  .setPosition(200, 50)
+  //  .addItems(g)
   //  ;
+  cp5.addSlider("polypoints")
+    .setPosition(10,100)
+    .setRange(3,7)
+    ;
   cp5.addColorWheel("selected", 400, 10, 200)
     .setRGB(color(249, 252, 88))
     ;
-  cp5.addColorWheel("gradientColor", 600, 10, 200)
-    .setRGB(color(249, 252, 88))
-    ;
+  //cp5.addColorWheel("gradientColor", 600, 10, 200)
+  //  .setRGB(color(249, 252, 88))
+  //  ;
 
   if (serial) {
     //diagnostic to list all ports
@@ -155,17 +164,6 @@ void setup() {
     String portName = Serial.list()[6]; // may have to change this number later
     myPort = new Serial(this, portName, 9600);
   }
-
-  //ball = new Shape(100,100,100);
-
-  //ball = new Shape(100,100,50);
-  //for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-  //    for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-  //      ball.add(new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad));
-  //      rows = i;
-  //      cols = j;
-  //    }
-  //  }
 
   int cols = width/(ballRad+spacing);
   int rows= height/(ballRad+spacing);
@@ -184,14 +182,11 @@ void setup() {
 
 void draw() {
   background(back);
-
-  //ball.display(mouseX,mouseY);
-
-  //for (Shape b : ball) b.display(mouseX, mouseY);
-
+  int gridSkew = (int)map(gridSkewInput, 0, 100, 0, ballRad/2);
   for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
     for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-      ballgrid[i][j].display(i*(ballRad+spacing), j*(ballRad+spacing), mouseX, mouseY);
+      if (j%2 == 0) ballgrid[i][j].display(i*(ballRad+spacing)+gridSkew, j*(ballRad+spacing), mouseX, mouseY);
+      else          ballgrid[i][j].display(i*(ballRad+spacing),          j*(ballRad+spacing), mouseX, mouseY);
     }
   }
 
@@ -202,12 +197,6 @@ void draw() {
   //  ellipse(wheelX, wheelY, cursorRad, cursorRad); // cursor marker
   //}
 
-  //if (shapeSelect == 3 && debugDisplay) {
-  //  String msg = "rows:" + rows + ", cols:" + cols;
-  //  fill(255);
-  //  text(msg, 10, height-10);
-  //}
-
   noFill();
   stroke(255);
   ellipse(mouseX, mouseY, ballRad, ballRad);
@@ -215,9 +204,6 @@ void draw() {
 }
 
 
-//void keyPressed(){
-//  if (key == 'a') ball.showColor();
-//}
 
 void keyPressed() {
   if (key == ' ') {
@@ -227,28 +213,18 @@ void keyPressed() {
       }
     }
   }
+  if (key == 'h') {
+    cp5.hide(); // hide all GUI menus
+    debugDisplay = false;
+  }
+  if (key == 's') {
+    cp5.show(); // show all GUI menus
+    debugDisplay = true;
+  }
+  if (key == 's') cp5.saveProperties(); // save out controlP5 settings to JSON
+  if (key == 'l') cp5.loadProperties(); // load saved properties
 }
 
-/*
-void keyPressed() {
- if (key == ' ') for (Shape b : ball) b.resetColor(); // mark every object as unselected
- if (key == 'h') {
- cp5.hide(); // hide all GUI menus
- debugDisplay = false;
- }
- if (key == 's') {
- cp5.show(); // show all GUI menus
- debugDisplay = true;
- }
- if (key == 'c') { // clear board
- int i = 0;
- while (i < ball.size()) ball.remove(i);
- }
- if (key == 'a') for (Shape b : ball) b.showColor(); // mark every object as selected
- if (key == 's') cp5.saveProperties(); // save out controlP5 settings to JSON
- if (key == 'l') cp5.loadProperties(); // load saved properties
- }
- */
 
 class Shape
 {
@@ -273,20 +249,18 @@ class Shape
   }
 
   void display(int dotxpos, int dotypos, int xin, int yin) {
-    PVector mousePos = new PVector(xin, yin);
+    PVector cursorPos = new PVector(xin, yin);
     PVector dotPos = new PVector(dotxpos, dotypos);
-    
-    float d = PVector.dist(dotPos, mousePos);
+
+    float d = PVector.dist(dotPos, cursorPos);
     if ((int)d < ballRad/2) moused = true;
     if (moused) {
       if (gradient==0) fill(selected);
       //else fill(gradientizer(x, y));
     } else fill(unselected);
 
-    if (shapeSelect == 2 || shapeSelect == 4) polygon(x, y, ballRad, polypoints, rot);
-    //else ellipse(pos.x, pos.y, rad, rad);
-
-    ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
+    if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
+    else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
   }
 
   void resetColor() {
@@ -328,20 +302,15 @@ class Shape
  }
  
  */
-
-// shamelessly stolen from the internet and modified a bit
-void polygon(int x, int y, int radius, int npoints, boolean rotate) {
+ 
+ // shamelessly stolen from the internet and modified a bit
+void polygon(int x, int y, int npoints) {
   float angle = TWO_PI / npoints;
-  if (rotate) {
-    pushMatrix();
-    rotate(angle/2);
-  }
   beginShape();
   for (float a = 0; a < TWO_PI; a += angle) {
-    float sx = x + cos(a) * radius;
-    float sy = y + sin(a) * radius;
+    float sx = x + cos(a) * ballRad/2;
+    float sy = y + sin(a) * ballRad/2;
     vertex(sx, sy);
   }
   endShape(CLOSE);
-  if (rotate) popMatrix();
 }
