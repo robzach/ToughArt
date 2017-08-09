@@ -45,6 +45,11 @@
  v. 0.66 Jul 27, 2017
  added ability to save out settings (press 's') and load them in (press 'l')
  
+ v. 0.7b slideSwitches branch Aug 8, 2017
+ IN PROGRESS interpreting 5 data points coming from the Arduino
+ IN PROGRESS fixing proximity scan function of each ball so it doesn't do too many scans unnecessarily (thanks Madeline Gannon)
+ changed position containers to PVectors (thanks again to Madeline)
+ 
  */
 
 import controlP5.*;
@@ -63,6 +68,7 @@ int ballRad = 30;
 int spacing = 3;
 int cursorRad = 8;
 int polypoints = 3;
+int gridSkew = 0;
 ControlP5 cp5;
 Slider rad;
 
@@ -227,10 +233,12 @@ class Shape
   int x, y, rad, inside;
   boolean moused = false;
   boolean rot = false;
+  PVector pos;
 
   Shape(int inx, int iny, int inrad) {
-    x = inx;
-    y = iny;
+    PVector pos = new PVector(inx, iny);
+    //pos.x = inx;
+    //pos.y = iny;
     rad = inrad;
   }
 
@@ -257,12 +265,17 @@ class Shape
   }
 
   void display(int xin, int yin) {
+    PVector mousePos = new PVector(mouseX, mouseY);
+    
     //if (abs(wheelXin - x) < rad && abs(wheelYin - y) < rad) moused = true;
-    if ( sq(xin - x) + sq(yin - y) < sq(rad)/3 ) moused = true; // the 3 divisor is totally made up
+    //if ( sq(xin - x) + sq(yin - y) < sq(rad)/3 ) moused = true; // the 3 divisor is totally made up
+    float d = PVector.dist(pos, mousePos);
+    if (d < ballRad) moused = true;
     if (moused) {
       if (gradient==0) fill(selected);
       else fill(gradientizer(x, y));
-    } else fill(unselected);
+    } 
+    else fill(unselected);
 
     if (shapeSelect == 2 || shapeSelect == 4) polygon(x, y, ballRad, polypoints, rot);
     else ellipse(x, y, rad, rad);
@@ -292,8 +305,12 @@ void serialEvent(Serial myPort) {
     }
     String values [] = split(inString, ',');
     if (values.length>1) {
-      wheelX = int(values[0]);
-      wheelY = int(values[1]);
+      wheelX = int(values[0]); // range 0–10000
+      wheelY = int(values[1]); // range 0–10000
+      ballRad = int(values[2]); // range 5–200
+      polypoints = int(values[3]); // range 3–7
+      gridSkew = int(values[4]); // range 0–100
+      
       wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
       wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
     }
