@@ -6,7 +6,7 @@
    leftwheel,rightwheel,ballRad,polypoints,gridSkew
 
    leftwheel and rightwheel have ranges 0–10000
-   ballRad has range 10–200
+   ballRad has range 15–200
    polyPoints has range 3–7
    gridSkew has range 0–100
 
@@ -23,6 +23,9 @@
    v 0.21 8-9-17
     minor restructuring; added reset button on pin 7 which I'd forgotten about
     tested and is outputting correct serial data
+
+   v 0.22 8-9-17
+    corrected ballRad range to 15–200
 
    Robert Zacharias
    rz@rzach.me
@@ -88,7 +91,7 @@ void loop() {
 
 
   if (change) {
-    int ballRad = map(val[0],0,1023,10,200);
+    int ballRad = map(val[0],0,1023,15,200);
     int polyPoints = map(val[1],0,1000,3,7);
     int gridSkew = map(val[2],0,1023,0,100);
     
