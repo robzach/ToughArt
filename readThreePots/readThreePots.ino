@@ -27,6 +27,9 @@
    v 0.22 8-9-17
     corrected ballRad range to 15–200
 
+   v 0.23 8-10-17
+    adding wraparound to the encoder wheels as per Arvid's suggestion
+
    Robert Zacharias
    rz@rzach.me
 
@@ -37,6 +40,8 @@
 
 Encoder left(2, 4);
 Encoder right(3, 5);
+
+bool wraparound = true;
 
 int resetButton = 7;
 
@@ -75,11 +80,20 @@ void loop() {
   long leftPos = left.read();
   long rightPos = right.read();
 
-  if (leftPos < 0) left.write(0);
-  else if (leftPos > 10000) left.write(10000);
-  if (rightPos < 0) right.write(0);
-  else if (rightPos > 10000) right.write(10000);
+  if (wraparound) {
+    if (leftPos < 0) left.write(9999);
+    else if (leftPos > 10000) left.write(0);
+    if (rightPos < 0) right.write(9999);
+    else if (rightPos > 10000) right.write(0);
+  }
 
+  else {
+    if (leftPos < 0) left.write(0);
+    else if (leftPos > 10000) left.write(10000);
+    if (rightPos < 0) right.write(0);
+    else if (rightPos > 10000) right.write(10000);
+  }
+  
   if (leftPos != leftOldPos || rightPos != rightOldPos) {
     leftOldPos = leftPos;
     rightOldPos = rightPos;
@@ -91,10 +105,10 @@ void loop() {
 
 
   if (change) {
-    int ballRad = map(val[0],0,1023,15,200);
-    int polyPoints = map(val[1],0,1000,3,7);
-    int gridSkew = map(val[2],0,1023,0,100);
-    
+    int ballRad = map(val[0], 0, 1023, 15, 200);
+    int polyPoints = map(val[1], 0, 1000, 3, 7);
+    int gridSkew = map(val[2], 0, 1023, 0, 100);
+
     Serial.print(leftPos);
     Serial.print(',');
     Serial.print(rightPos);
@@ -104,7 +118,7 @@ void loop() {
     Serial.print(polyPoints);
     Serial.print(',');
     Serial.println(gridSkew);
-        
+
     change = false;
   }
 
