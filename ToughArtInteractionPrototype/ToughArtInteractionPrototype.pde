@@ -68,7 +68,11 @@
  sketch receives serial data from Arduino
  was getting an out of bounds exception when making ballRad small, but now I can't reproduce the behavior
  
- moving v. 0.28 to master Aug 9, 2017
+ moving v. 0.82 to master Aug 9, 2017
+ 
+ v. 0.83 Aug 20, 2017
+ corrected tiny typo in version history
+ slightly modified debug console feedback
  
  */
 
@@ -82,7 +86,7 @@ Shape[][] ballgrid;
 
 boolean serial = true;
 boolean debugDisplay = true;
-boolean serialDebugConsole = false;
+boolean debugConsole = true;
 int wheelX, wheelY;
 
 int ballRad = 15;
@@ -169,6 +173,8 @@ void setup() {
       ballgrid[i][j] = new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad);
     }
   }
+
+  if (debugConsole) println("cols: " + cols + " rows: " + rows);
 
   cp5.hide(); // hide all GUI menus by default
   debugDisplay = false;
@@ -271,7 +277,7 @@ class Shape
 // though I had to change the second line to use readStringUntil() to make it actually work
 void serialEvent(Serial myPort) {
   String inString = myPort.readStringUntil(10);
-  if (serialDebugConsole) print(inString);
+  if (debugConsole) print(inString);
   if (inString != null) {
     inString = trim(inString);
     for (int i = 0; i < inString.length(); i++) { // look for 'r' in string (reset flag)
