@@ -74,6 +74,9 @@
  corrected tiny typo in version history
  slightly modified debug console feedback
  
+ v. 0.84x colorFade branch Aug 22, 2017
+ trying to add a parameter "fadeRate" that changes rate at which a color fades out and it's not working as expected
+ 
  */
 
 import controlP5.*;
@@ -94,6 +97,7 @@ int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
 int gridSkewInput = 0;
+float fadeRate = 1.0;
 ControlP5 cp5;
 Slider rad;
 
@@ -133,6 +137,10 @@ void setup() {
   cp5.addSlider("gridSkewInput")
     .setPosition(10, 50)
     .setRange(0, 100)
+    ;
+  cp5.addSlider("fadeRate")
+    .setPosition(10, 60)
+    .setRange(0.0, 1.0)
     ;
   cp5.addToggle("serial")
     .setPosition(200, 10)
@@ -232,6 +240,8 @@ class Shape
   boolean moused = false;
   boolean rot = false;
   PVector pos;
+  
+  float alpha = 255.0;
 
   Shape(int inx, int iny, int inrad) {
     pos = new PVector(inx, iny);
@@ -251,18 +261,22 @@ class Shape
   void display(int dotxpos, int dotypos, int xin, int yin) {
     PVector cursorPos = new PVector(xin, yin);
     PVector dotPos = new PVector(dotxpos, dotypos);
+    
+    alpha *= fadeRate;
 
     float d = PVector.dist(dotPos, cursorPos);
     if ((int)d < ballRad/2) moused = true;
+    
     if (moused) {
       if (gradient==0) fill(selected);
       //else fill(gradientizer(x, y));
-    } else fill(unselected);
+    } 
+    else fill(unselected);
 
     if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
     else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
+    
   }
-
   void resetColor() {
     moused = false;
   }
