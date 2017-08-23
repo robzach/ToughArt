@@ -30,6 +30,9 @@
    v 0.23 8-10-17
     adding wraparound to the encoder wheels as per Arvid's suggestion
 
+   v 0.24 8-23-17
+    switching X and Y wheels in software since it's easier than doing it in hardware
+
    Robert Zacharias
    rz@rzach.me
 
@@ -38,8 +41,8 @@
 
 #include <Encoder.h>
 
-Encoder left(2, 4);
-Encoder right(3, 5);
+Encoder right(2, 4);
+Encoder left(3, 5);
 
 bool wraparound = true;
 
