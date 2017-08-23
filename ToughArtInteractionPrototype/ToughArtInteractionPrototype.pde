@@ -80,6 +80,7 @@
  v. 0.85 colorFade branch Aug 23, 2017
  fading can be set by "fadeRate": 1 is no fading and 0.95 is fairly fast fading
  
+ v. 0.85 merging into master Aug 23, 2017
  
  */
 
