@@ -98,8 +98,8 @@ color unselected = 40;
 color selected = color(249, 252, 88); // these two colors to be modified by cp5 colorWheel below
 color gradientColor = color(249, 252, 88);
 
-int w = 1200;
-int h = 800;
+int w = 1280; // was 1200
+int h = 1024; // was 800
 int margin = 25;
 int Bmargin = h - margin;
 int Rmargin = w - margin;
@@ -155,7 +155,7 @@ void setup() {
     for (int i = 0; i < Serial.list().length; i++) {
       println("Serial.list()[", i, "] = ", Serial.list()[i]);
     }
-    String portName = Serial.list()[6]; // may have to change this number later
+    String portName = Serial.list()[9]; // may have to change this number later
     myPort = new Serial(this, portName, 9600);
   }
 
