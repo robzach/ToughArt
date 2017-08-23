@@ -77,6 +77,10 @@
  v. 0.84x colorFade branch Aug 22, 2017
  trying to add a parameter "fadeRate" that changes rate at which a color fades out and it's not working as expected
  
+ v. 0.85 colorFade branch Aug 23, 2017
+ fading can be set by "fadeRate": 1 is no fading and 0.95 is fairly fast fading
+ 
+ 
  */
 
 import controlP5.*;
@@ -128,7 +132,7 @@ void setup() {
     ;
   cp5.addSlider("spacing")
     .setPosition(10, 20)
-    .setRange(0, 50)
+    .setRange(-20, 50)
     ;
   cp5.addSlider("cursorRad")
     .setPosition(10, 30)
@@ -140,7 +144,7 @@ void setup() {
     ;
   cp5.addSlider("fadeRate")
     .setPosition(10, 60)
-    .setRange(0.0, 1.0)
+    .setRange(0.95, 1.0)
     ;
   cp5.addToggle("serial")
     .setPosition(200, 10)
@@ -212,7 +216,7 @@ void draw() {
       }
     }
   }
-  if(debugDisplay){
+  if (debugDisplay) {
     int cols = Rmargin / (ballRad+spacing);
     int rows = Bmargin / (ballRad+spacing);
     text(rows + " rows\n" + cols + " cols", 10, height-20);
@@ -240,14 +244,14 @@ class Shape
   boolean moused = false;
   boolean rot = false;
   PVector pos;
-  
-  float alpha = 255.0;
+  float alpha;
 
   Shape(int inx, int iny, int inrad) {
     pos = new PVector(inx, iny);
     //pos.x = inx;
     //pos.y = iny;
     rad = inrad;
+    alpha = 255;
   }
 
   Shape(int inx, int iny, int inrad, int inside, boolean inrot) {
@@ -261,21 +265,30 @@ class Shape
   void display(int dotxpos, int dotypos, int xin, int yin) {
     PVector cursorPos = new PVector(xin, yin);
     PVector dotPos = new PVector(dotxpos, dotypos);
-    
-    alpha *= fadeRate;
 
     float d = PVector.dist(dotPos, cursorPos);
     if ((int)d < ballRad/2) moused = true;
-    
-    if (moused) {
-      if (gradient==0) fill(selected);
-      //else fill(gradientizer(x, y));
-    } 
-    else fill(unselected);
 
+    // draw background shape, which will be drawn on top of by selected color
+    fill(unselected);
     if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
     else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
+
+    // trigger once when moused over
+    if (moused){
+      alpha = 255 * fadeRate;
+      fill(selected, alpha);
+      if(alpha != 255) moused = false;
+    }
     
+    // trigger when already in fade, to continue fade
+    if (alpha < 255){
+      alpha *= fadeRate;
+      fill(selected, alpha);
+    }
+        
+    if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
+    else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
   }
   void resetColor() {
     moused = false;
