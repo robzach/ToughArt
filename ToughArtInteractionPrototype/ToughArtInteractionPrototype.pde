@@ -85,6 +85,13 @@
  v. 0.86 Aug 23, 2017
  using a map command to keep ballRad in range 60-200
  
+ v. 0.87 quiettimer branch Aug 24, 2017
+ 'inactivity' sequence triggers after shortWait seconds of inactivity (not fully implemented)
+ changed minimum and default ballRad to 60
+ using createFont() rather than loadFont() in order to render properly at multiple sizes
+ got rid of settings() function at top since it wasn't really needed
+ pushed on-screen sliders around a bit
+ 
  */
 
 import controlP5.*;
@@ -100,7 +107,7 @@ boolean debugDisplay = true;
 boolean debugConsole = true;
 int wheelX, wheelY;
 
-int ballRad = 15;
+int ballRad = 60;
 int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
@@ -109,66 +116,63 @@ float fadeRate = 1.0;
 ControlP5 cp5;
 Slider rad;
 
+long timerval;
+boolean inactive = true;
+long shortWait = 5 * 1000; // 5 seconds
+long longWait = 10 * 1000; // 10 seconds
+
 color back = 10; // background
 color unselected = 40;
-color selected = color(249, 252, 88); // these two colors to be modified by cp5 colorWheel below
-color gradientColor = color(249, 252, 88);
+color selected = color(249, 252, 88); // to be modified by cp5 colorWheel below
 
-int w = 1280; // was 1200
-int h = 1024; // was 800
 int margin = 25;
-int Bmargin = h - margin;
-int Rmargin = w - margin;
+int Bmargin, Rmargin;//will be set below
 
-int gradient = 0;
-
-// needed to use variables to set width and height
-void settings() {
-  size(w, h);
-}
+PFont font;
 
 void setup() {
+  size(800,800);
+  //size(1280, 1024);
+  Bmargin = height-margin;
+  Rmargin = width-margin;
+  
   background(back);
+  
   cp5 = new ControlP5(this);
+  cp5.addToggle("serial")
+    .setPosition(10,0)
+    .setSize(50, 10)
+    ;
   cp5.addSlider("ballRad")
-    .setPosition(10, 10)
-    .setRange(15, 200)
-    ;
-  cp5.addSlider("spacing")
-    .setPosition(10, 20)
-    .setRange(-20, 50)
-    ;
-  cp5.addSlider("cursorRad")
     .setPosition(10, 30)
+    .setRange(60, 200)
+    ;
+  //cp5.addSlider("spacing")
+  //  .setPosition(10, 20)
+  //  .setRange(-20, 50)
+  //  ;
+  cp5.addSlider("cursorRad")
+    .setPosition(10, 45)
     .setRange(1, 30)
     ;
+  cp5.addSlider("polypoints")
+    .setPosition(10, 60)
+    .setRange(3, 7)
+    ;
   cp5.addSlider("gridSkewInput")
-    .setPosition(10, 50)
+    .setPosition(10, 75)
     .setRange(0, 100)
     ;
   cp5.addSlider("fadeRate")
-    .setPosition(10, 60)
+    .setPosition(10, 90)
     .setRange(0.95, 1.0)
     ;
-  cp5.addToggle("serial")
-    .setPosition(200, 10)
-    .setSize(10, 10)
-    ;
-  //List g = Arrays.asList("none", "horizontal", "vertical");
-  //cp5.addScrollableList("gradient")
-  //  .setPosition(200, 50)
-  //  .addItems(g)
-  //  ;
-  cp5.addSlider("polypoints")
-    .setPosition(10, 100)
-    .setRange(3, 7)
-    ;
-  cp5.addColorWheel("selected", 400, 10, 200)
+  cp5.addColorWheel("selected", 10, 105, 100)
     .setRGB(color(249, 252, 88))
     ;
-  //cp5.addColorWheel("gradientColor", 600, 10, 200)
-  //  .setRGB(color(249, 252, 88))
-  //  ;
+
+
+
 
   if (serial) {
     //diagnostic to list all ports
@@ -194,6 +198,8 @@ void setup() {
 
   cp5.hide(); // hide all GUI menus by default
   debugDisplay = false;
+  
+  font = createFont("SansSerif", 48);
 }
 
 
@@ -223,8 +229,23 @@ void draw() {
   if (debugDisplay) {
     int cols = Rmargin / (ballRad+spacing);
     int rows = Bmargin / (ballRad+spacing);
+    textSize(12);
+    fill(255);
     text(rows + " rows\n" + cols + " cols", 10, height-20);
   }
+  
+  //if (millis() - timerval > shortWait) startFadingDots; // NOT YET IMPLEMENTED
+  
+  if (millis() - timerval > longWait){ // show suggestion text
+    fill(255,128);
+    textAlign(CENTER, CENTER);
+    textFont(font, 50);
+    String tryDrawing = "Try drawing the letter";
+    text(tryDrawing, width/2, 50);
+    textFont(font, 800);
+    text('T', width/2, height/2);
+  }
+  
 }
 
 
@@ -252,8 +273,6 @@ class Shape
 
   Shape(int inx, int iny, int inrad) {
     pos = new PVector(inx, iny);
-    //pos.x = inx;
-    //pos.y = iny;
     rad = inrad;
     alpha = 255;
   }
@@ -307,6 +326,7 @@ class Shape
 // from http://www.interactiondesign.se/wiki/courses:intro.prototyping.spring.2015.jan19_20_21
 // though I had to change the second line to use readStringUntil() to make it actually work
 void serialEvent(Serial myPort) {
+  timerval = millis(); // reset activity timer
   String inString = myPort.readStringUntil(10);
   if (debugConsole) print(inString);
   if (inString != null) {
@@ -326,7 +346,7 @@ void serialEvent(Serial myPort) {
       polypoints = int(values[3]); // range 3–7
       gridSkewInput = int(values[4]); // range 0–100
       
-      ballRad = (int)map(ballRad,5, 200,60,200);
+      ballRad = (int)map(ballRad,5, 200,60,200); //hotfix to push values without needing to change Arduino firmware
 
       wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
       wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
@@ -334,7 +354,9 @@ void serialEvent(Serial myPort) {
   }
 }
 
-
+void inactive(){
+  println("it's been 5 seconds");
+}
 
 // shamelessly stolen from the internet and modified a bit
 void polygon(int x, int y, int npoints) {
