@@ -92,6 +92,9 @@
  got rid of settings() function at top since it wasn't really needed
  pushed on-screen sliders around a bit
  
+ v. 0.88 quiettimer branch Aug 24, 2017
+ shortwait and longwait implemented.
+ 
  */
 
 import controlP5.*;
@@ -117,7 +120,7 @@ ControlP5 cp5;
 Slider rad;
 
 long timerval;
-boolean inactive = true;
+boolean autofade = true;
 long shortWait = 5 * 1000; // 5 seconds
 long longWait = 10 * 1000; // 10 seconds
 
@@ -126,21 +129,21 @@ color unselected = 40;
 color selected = color(249, 252, 88); // to be modified by cp5 colorWheel below
 
 int margin = 25;
-int Bmargin, Rmargin;//will be set below
+int Bmargin, Rmargin; //will be set below
 
 PFont font;
 
 void setup() {
-  size(800,800);
+  size(800, 800);
   //size(1280, 1024);
   Bmargin = height-margin;
   Rmargin = width-margin;
-  
+
   background(back);
-  
+
   cp5 = new ControlP5(this);
   cp5.addToggle("serial")
-    .setPosition(10,0)
+    .setPosition(10, 0)
     .setSize(50, 10)
     ;
   cp5.addSlider("ballRad")
@@ -171,9 +174,6 @@ void setup() {
     .setRGB(color(249, 252, 88))
     ;
 
-
-
-
   if (serial) {
     //diagnostic to list all ports
     for (int i = 0; i < Serial.list().length; i++) {
@@ -198,12 +198,9 @@ void setup() {
 
   cp5.hide(); // hide all GUI menus by default
   debugDisplay = false;
-  
+
   font = createFont("SansSerif", 48);
 }
-
-
-
 
 void draw() {
   background(back);
@@ -233,11 +230,12 @@ void draw() {
     fill(255);
     text(rows + " rows\n" + cols + " cols", 10, height-20);
   }
+
+  if (millis() - timerval > shortWait) autofade=true;
   
-  //if (millis() - timerval > shortWait) startFadingDots; // NOT YET IMPLEMENTED
-  
-  if (millis() - timerval > longWait){ // show suggestion text
-    fill(255,128);
+  if (millis() - timerval > longWait) { // show suggestion text
+    resetMarked();
+    fill(255, 128);
     textAlign(CENTER, CENTER);
     textFont(font, 50);
     String tryDrawing = "Try drawing the letter";
@@ -245,10 +243,7 @@ void draw() {
     textFont(font, 800);
     text('T', width/2, height/2);
   }
-  
 }
-
-
 
 void keyPressed() {
   if (key == ' ') resetMarked();
@@ -297,19 +292,24 @@ class Shape
     if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
     else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
 
-    // trigger once when moused over
-    if (moused){
-      alpha = 255 * fadeRate;
-      fill(selected, alpha);
-      if(alpha != 255) moused = false;
+    //// trigger once when moused over
+    //if (moused) {
+    //  alpha = 255 * fadeRate;
+    //  fill(selected, alpha);
+    //  if (alpha != 255) moused = false;
+    //}
+
+    if (moused) {
+      fill(selected);
+      if (autofade) {
+        alpha *= fadeRate;
+        fill(selected, alpha);
+      }
     }
-    
+
     // trigger when already in fade, to continue fade
-    if (alpha < 255){
-      alpha *= fadeRate;
-      fill(selected, alpha);
-    }
-        
+
+
     if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
     else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
   }
@@ -345,8 +345,8 @@ void serialEvent(Serial myPort) {
       ballRad = int(values[2]); // range 5–200
       polypoints = int(values[3]); // range 3–7
       gridSkewInput = int(values[4]); // range 0–100
-      
-      ballRad = (int)map(ballRad,5, 200,60,200); //hotfix to push values without needing to change Arduino firmware
+
+      ballRad = (int)map(ballRad, 5, 200, 60, 200); //hotfix to push values without needing to change Arduino firmware
 
       wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
       wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
@@ -354,8 +354,9 @@ void serialEvent(Serial myPort) {
   }
 }
 
-void inactive(){
-  println("it's been 5 seconds");
+void mouseMoved() {
+  timerval = millis(); // reset activity timer
+  autofade = false;
 }
 
 // shamelessly stolen from the internet and modified a bit
