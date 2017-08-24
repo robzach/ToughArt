@@ -82,6 +82,9 @@
  
  v. 0.85 merging into master Aug 23, 2017
  
+ v. 0.86 Aug 23, 2017
+ using a map command to keep ballRad in range 60-200
+ 
  */
 
 import controlP5.*;
@@ -172,7 +175,7 @@ void setup() {
     for (int i = 0; i < Serial.list().length; i++) {
       println("Serial.list()[", i, "] = ", Serial.list()[i]);
     }
-    String portName = Serial.list()[9]; // may have to change this number later
+    String portName = Serial.list()[6]; // may have to change this number later
     myPort = new Serial(this, portName, 9600);
   }
 
@@ -322,6 +325,8 @@ void serialEvent(Serial myPort) {
       ballRad = int(values[2]); // range 5–200
       polypoints = int(values[3]); // range 3–7
       gridSkewInput = int(values[4]); // range 0–100
+      
+      ballRad = (int)map(ballRad,5, 200,60,200);
 
       wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
       wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
