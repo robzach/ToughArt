@@ -95,6 +95,12 @@
  v. 0.88 quiettimer branch Aug 24, 2017
  shortwait and longwait implemented.
  
+ v. 0.89x quiettimer branch Aug 30, 2017
+ broke longwaitSequence into its own function
+ put Shape class definition on its own tab
+ size, shape, and color change after longwait triggers
+ HOWEVER inconsistent coloring behavior after longwait; needs fixing
+ 
  */
 
 import controlP5.*;
@@ -105,7 +111,7 @@ Serial myPort;
 
 Shape[][] ballgrid;
 
-boolean serial = true;
+boolean serial = false;
 boolean debugDisplay = true;
 boolean debugConsole = true;
 int wheelX, wheelY;
@@ -196,7 +202,7 @@ void setup() {
 
   if (debugConsole) println("cols: " + cols + " rows: " + rows);
 
-  cp5.hide(); // hide all GUI menus by default
+  //cp5.hide(); // hide all GUI menus by default
   debugDisplay = false;
 
   font = createFont("SansSerif", 48);
@@ -232,17 +238,8 @@ void draw() {
   }
 
   if (millis() - timerval > shortWait) autofade=true;
-  
-  if (millis() - timerval > longWait) { // show suggestion text
-    resetMarked();
-    fill(255, 128);
-    textAlign(CENTER, CENTER);
-    textFont(font, 50);
-    String tryDrawing = "Try drawing the letter";
-    text(tryDrawing, width/2, 50);
-    textFont(font, 800);
-    text('T', width/2, height/2);
-  }
+  if (millis() - timerval > longWait) longwaitSequence(); 
+  else longwaitFirstRun = true;
 }
 
 void keyPressed() {
@@ -257,69 +254,23 @@ void keyPressed() {
   }
 }
 
+boolean longwaitFirstRun = true;
 
-class Shape
-{
-  int x, y, rad, inside;
-  boolean moused = false;
-  boolean rot = false;
-  PVector pos;
-  float alpha;
-
-  Shape(int inx, int iny, int inrad) {
-    pos = new PVector(inx, iny);
-    rad = inrad;
-    alpha = 255;
+void longwaitSequence() {
+  if (longwaitFirstRun){
+    ballRad = (int)random(60,150);
+    polypoints = (int)random(3,8);
+    gridSkewInput = (int)random(0,100);
+    longwaitFirstRun = false;
   }
-
-  Shape(int inx, int iny, int inrad, int inside, boolean inrot) {
-    x = inx;
-    y = iny;
-    rad = inrad;
-    polypoints = inside;
-    rot = inrot;
-  }
-
-  void display(int dotxpos, int dotypos, int xin, int yin) {
-    PVector cursorPos = new PVector(xin, yin);
-    PVector dotPos = new PVector(dotxpos, dotypos);
-
-    float d = PVector.dist(dotPos, cursorPos);
-    if ((int)d < ballRad/2) moused = true;
-
-    // draw background shape, which will be drawn on top of by selected color
-    fill(unselected);
-    if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
-    else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
-
-    //// trigger once when moused over
-    //if (moused) {
-    //  alpha = 255 * fadeRate;
-    //  fill(selected, alpha);
-    //  if (alpha != 255) moused = false;
-    //}
-
-    if (moused) {
-      fill(selected);
-      if (autofade) {
-        alpha *= fadeRate;
-        fill(selected, alpha);
-      }
-    }
-
-    // trigger when already in fade, to continue fade
-
-
-    if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
-    else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
-  }
-  void resetColor() {
-    moused = false;
-  }
-
-  void showColor() {
-    moused = true;
-  }
+  resetMarked();
+  fill(255, 128);
+  textAlign(CENTER, CENTER);
+  textFont(font, 50);
+  String tryDrawing = "Try drawing the letter";
+  text(tryDrawing, width/2, 50);
+  textFont(font, 800);
+  text('T', width/2, height/2);
 }
 
 
