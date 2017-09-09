@@ -1,7 +1,7 @@
 /* Encoder Library - Basic Example
  * http://www.pjrc.com/teensy/td_libs_Encoder.html
  * 
- * modified to read two encoders, one of which is on Nano pins 2 and 4, the other on pins 3 and 5
+ * modified to read two encoders, one of which is on Uno pins 2 and 4, the other on pins 3 and 5
  * (pins 2 and 3 have interrupts and this library works best if each encoder is attached to 
  * at least one interrupt pin)
  * 
@@ -19,6 +19,10 @@
  *  
  * v 0.12 19 Jul. 2017
  *  * added sending reset command via serial when a button is pushed
+ *  
+ * v 0.2 9 Sep. 2017
+ *  * encoders roll over (less than 0 becomes 9999, more than 9999 becomes 0)
+ *  * removed reset button
  */
 
 #include <Encoder.h>
@@ -26,11 +30,8 @@
 Encoder left(2,4);
 Encoder right(3,5);
 
-int resetButton = 7;
-
 void setup() {
   Serial.begin(9600);
-  pinMode(resetButton, INPUT_PULLUP);
 }
 
 void loop() {
@@ -39,10 +40,10 @@ void loop() {
   long leftPos = left.read();
   long rightPos = right.read();
 
-  if(leftPos < 0) left.write(0);
-  else if(leftPos > 10000) left.write(10000);
-  if(rightPos < 0) right.write(0);
-  else if(rightPos > 10000) right.write(10000);
+  if(leftPos < 0) left.write(9999);
+  else if(leftPos > 9999) left.write(0);
+  if(rightPos < 0) right.write(9999);
+  else if(rightPos > 9999) right.write(0);
   
   
   if (leftPos != leftOldPos || rightPos != rightOldPos) {
@@ -52,6 +53,4 @@ void loop() {
     Serial.print(',');
     Serial.println(rightPos);
   }
-
-  if (digitalRead(resetButton) == LOW) Serial.println('r');
 }
