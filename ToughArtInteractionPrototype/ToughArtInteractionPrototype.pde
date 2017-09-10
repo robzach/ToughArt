@@ -124,6 +124,10 @@
  uses a random letter from a sequence instead of always T as the prompting text
  many tweaks and deletion of spurious code
  
+ v. 1.0 master branch Sep 10, 2017
+ merged quiettimer 0.95 into master
+ show no debug displays by default, serial on by default (to run facing the public)
+  
  */
 
 import controlP5.*;
@@ -135,8 +139,8 @@ Serial myPort;
 Shape[][] ballgrid;
 
 boolean serial = true;
-boolean debugDisplay = true;
-boolean debugConsole = true;
+boolean debugDisplay = false;
+boolean debugConsole = false;
 int wheelX, wheelY;
 
 int ballRad = 30;
@@ -225,7 +229,7 @@ void setup() {
 
   if (debugConsole) println("cols: " + cols + " rows: " + rows);
 
-  //cp5.hide(); // hide all GUI menus by default
+  cp5.hide(); // hide all GUI menus by default
 
   font = createFont("SansSerif", 48);
 }
