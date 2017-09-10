@@ -127,6 +127,9 @@
  v. 1.0 master branch Sep 10, 2017
  merged quiettimer 0.95 into master
  show no debug displays by default, serial on by default (to run facing the public)
+ 
+ v. 1.01 Sep 10, 2017
+ longWait defaults to 20 seconds
   
  */
 
@@ -152,7 +155,7 @@ float fadeRate = 0.997;
 ControlP5 cp5;
 
 long timerval;
-long longWait = 10 * 1000;
+long longWait = 20 * 1000;
 
 color back = 10; // background
 color unselected = 30;
