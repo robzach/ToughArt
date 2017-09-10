@@ -109,6 +109,14 @@
  serial on by default
  resolution matches projector native
  
+ v. 0.92 quiettimer branch Sep 10, 2017
+ ballrad goes down to 30
+ resolution tweaked because the projector is 1280x800, not 1200x800
+ 
+ v. 0.93 quiettimer branch Sep 10, 2017
+ fixed margins
+ 
+ 
  */
 
 import controlP5.*;
@@ -124,31 +132,31 @@ boolean debugDisplay = true;
 boolean debugConsole = true;
 int wheelX, wheelY;
 
-int ballRad = 60;
+int ballRad = 30;
 int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
 int gridSkewInput = 0;
-float fadeRate = 1.0;
+float fadeRate = 0.97;
 ControlP5 cp5;
 Slider rad;
 
 long timerval;
 boolean autofade = true;
-long shortWait = 5 * 1000; // 5 seconds
-long longWait = 10 * 1000; // 10 seconds
+long shortWait = 10 * 1000;
+long longWait = 10 * 1000;
 
 color back = 10; // background
 color unselected = 40;
 color selected = color(249, 252, 88); // to be modified by cp5 colorWheel below
 
 int margin = 25;
-int Bmargin, Rmargin; //will be set below
+int Bmargin, Rmargin, cols, rows; //will be set below
 
 PFont font;
 
 void setup() {
-  size(1200, 800);
+  size(1280, 800);
   Bmargin = height-margin;
   Rmargin = width-margin;
 
@@ -161,7 +169,15 @@ void setup() {
     ;
   cp5.addSlider("ballRad")
     .setPosition(10, 30)
-    .setRange(60, 200)
+    .setRange(30, 200)
+    ;
+  cp5.addSlider("shortWait")
+    .setPosition(200, 30)
+    .setRange(10000, 60000)
+    ;
+  cp5.addSlider("longWait")
+    .setPosition(200, 45)
+    .setRange(5000, 15000)
     ;
   //cp5.addSlider("spacing")
   //  .setPosition(10, 20)
@@ -196,12 +212,12 @@ void setup() {
     myPort = new Serial(this, portName, 9600);
   }
 
-  int cols = width/(ballRad+spacing);
-  int rows= height/(ballRad+spacing);
+  cols = (width-(margin*2))/(ballRad+spacing);
+  rows= (height-(margin*2))/(ballRad+spacing);
   ballgrid = new Shape[cols][rows];
 
-  for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-    for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
+  for (int i = 0; i < cols; i++) {
+    for (int j = 0; j < rows; j++) {
       // Initialize each object
       ballgrid[i][j] = new Shape(i*(ballRad+spacing), j*(ballRad+spacing), ballRad);
     }
@@ -220,10 +236,10 @@ void draw() {
   int gridSkew = (int)map(gridSkewInput, 0, 100, 0, ballRad/2);
 
   if (serial) {
-    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-        if (j%2 == 0) ballgrid[i][j].display(i*(ballRad+spacing)+gridSkew, j*(ballRad+spacing), wheelX, wheelY);
-        else          ballgrid[i][j].display(i*(ballRad+spacing), j*(ballRad+spacing), wheelX, wheelY);
+    for (int i = 0; i < cols; i++) {
+      for (int j = 0; j < rows; j++) {
+        if (j%2 == 0) ballgrid[i][j].display(i*(ballRad+spacing)+gridSkew+margin, j*(ballRad+spacing)+margin, wheelX, wheelY);
+        else          ballgrid[i][j].display(i*(ballRad+spacing)+margin, j*(ballRad+spacing)+margin, wheelX, wheelY);
       }
     }
     fill(0, 255, 255); // cursor marker color
@@ -264,10 +280,10 @@ void keyPressed() {
 boolean longwaitFirstRun = true;
 
 void longwaitSequence() {
-  if (longwaitFirstRun){
-    ballRad = (int)random(60,150);
-    polypoints = (int)random(3,8);
-    gridSkewInput = (int)random(0,100);
+  if (longwaitFirstRun) {
+    ballRad = (int)random(30, 150);
+    polypoints = (int)random(3, 8);
+    gridSkewInput = (int)random(0, 100);
     longwaitFirstRun = false;
   }
   resetMarked();
