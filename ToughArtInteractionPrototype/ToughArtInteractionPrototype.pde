@@ -101,6 +101,9 @@
  size, shape, and color change after longwait triggers
  HOWEVER inconsistent coloring behavior after longwait; needs fixing
  
+ v. 0.90 quiettimer branch Sep 9, 2017
+ only getting data from two encoders via serial
+ 
  */
 
 import controlP5.*;
@@ -282,25 +285,10 @@ void serialEvent(Serial myPort) {
   if (debugConsole) print(inString);
   if (inString != null) {
     inString = trim(inString);
-    for (int i = 0; i < inString.length(); i++) { // look for 'r' in string (reset flag)
-      char c = inString.charAt(i);
-      if (c == 'r') {
-        resetMarked();
-        return;
-      }
-    }
     String values [] = split(inString, ',');
     if (values.length>1) {
-      wheelX = int(values[0]); // range 0–10000
-      wheelY = int(values[1]); // range 0–10000
-      ballRad = int(values[2]); // range 5–200
-      polypoints = int(values[3]); // range 3–7
-      gridSkewInput = int(values[4]); // range 0–100
-
-      ballRad = (int)map(ballRad, 5, 200, 60, 200); //hotfix to push values without needing to change Arduino firmware
-
-      wheelX = (int)map(wheelX, 0, 10000, margin, Rmargin);
-      wheelY = (int)map(wheelY, 0, 10000, margin, Bmargin);
+      wheelX = (int)map(values[0], 0, 10000, margin, Rmargin);
+      wheelY = (int)map(values[1], 0, 10000, margin, Bmargin);
     }
   }
 }
