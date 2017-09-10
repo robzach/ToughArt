@@ -104,6 +104,11 @@
  v. 0.90 quiettimer branch Sep 9, 2017
  only getting data from two encoders via serial
  
+ v. 0.91 quiettimer branch Sep 9, 2017
+ changed casting string to int so it would compile
+ serial on by default
+ resolution matches projector native
+ 
  */
 
 import controlP5.*;
@@ -143,8 +148,7 @@ int Bmargin, Rmargin; //will be set below
 PFont font;
 
 void setup() {
-  size(800, 800);
-  //size(1280, 1024);
+  size(1200, 800);
   Bmargin = height-margin;
   Rmargin = width-margin;
 
@@ -188,7 +192,7 @@ void setup() {
     for (int i = 0; i < Serial.list().length; i++) {
       println("Serial.list()[", i, "] = ", Serial.list()[i]);
     }
-    String portName = Serial.list()[6]; // may have to change this number later
+    String portName = Serial.list()[4]; // may have to change this number later
     myPort = new Serial(this, portName, 9600);
   }
 
@@ -287,8 +291,8 @@ void serialEvent(Serial myPort) {
     inString = trim(inString);
     String values [] = split(inString, ',');
     if (values.length>1) {
-      wheelX = (int)map(values[0], 0, 10000, margin, Rmargin);
-      wheelY = (int)map(values[1], 0, 10000, margin, Bmargin);
+      wheelX = (int)map(int(values[0]), 0, 10000, margin, Rmargin);
+      wheelY = (int)map(int(values[1]), 0, 10000, margin, Bmargin);
     }
   }
 }
