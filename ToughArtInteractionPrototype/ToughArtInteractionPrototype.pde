@@ -119,7 +119,7 @@ Serial myPort;
 
 Shape[][] ballgrid;
 
-boolean serial = false;
+boolean serial = true;
 boolean debugDisplay = true;
 boolean debugConsole = true;
 int wheelX, wheelY;
