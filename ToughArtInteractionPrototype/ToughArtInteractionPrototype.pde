@@ -116,6 +116,13 @@
  v. 0.93 quiettimer branch Sep 10, 2017
  fixed margins
  
+ v. 0.94 quiettimer branch Sep 10, 2017
+ dots fade individually (no more shortWait), using code from master branch v. 0.85
+ fixed dots having memory left over from before reset sequence
+ 
+ v. 0.95 quiettimer branch Sep 10, 2017
+ uses a random letter from a sequence instead of always T as the prompting text
+ many tweaks and deletion of spurious code
  
  */
 
@@ -137,17 +144,14 @@ int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
 int gridSkewInput = 0;
-float fadeRate = 0.97;
+float fadeRate = 0.997;
 ControlP5 cp5;
-Slider rad;
 
 long timerval;
-boolean autofade = true;
-long shortWait = 10 * 1000;
 long longWait = 10 * 1000;
 
 color back = 10; // background
-color unselected = 40;
+color unselected = 30;
 color selected = color(249, 252, 88); // to be modified by cp5 colorWheel below
 
 int margin = 25;
@@ -171,13 +175,9 @@ void setup() {
     .setPosition(10, 30)
     .setRange(30, 200)
     ;
-  cp5.addSlider("shortWait")
-    .setPosition(200, 30)
-    .setRange(10000, 60000)
-    ;
   cp5.addSlider("longWait")
     .setPosition(200, 45)
-    .setRange(5000, 15000)
+    .setRange(5000l, 15000l)
     ;
   //cp5.addSlider("spacing")
   //  .setPosition(10, 20)
@@ -226,7 +226,6 @@ void setup() {
   if (debugConsole) println("cols: " + cols + " rows: " + rows);
 
   //cp5.hide(); // hide all GUI menus by default
-  debugDisplay = false;
 
   font = createFont("SansSerif", 48);
 }
@@ -247,20 +246,19 @@ void draw() {
   } else {
     for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
       for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
-        if (j%2 == 0) ballgrid[i][j].display(i*(ballRad+spacing)+gridSkew, j*(ballRad+spacing), mouseX, mouseY);
-        else          ballgrid[i][j].display(i*(ballRad+spacing), j*(ballRad+spacing), mouseX, mouseY);
+        if (j%2 == 0) ballgrid[i][j].display(i*(ballRad+spacing)+gridSkew+margin, j*(ballRad+spacing)+margin, mouseX, mouseY);
+        else          ballgrid[i][j].display(i*(ballRad+spacing)+margin, j*(ballRad+spacing)+margin, mouseX, mouseY);
       }
     }
   }
+
   if (debugDisplay) {
-    int cols = Rmargin / (ballRad+spacing);
-    int rows = Bmargin / (ballRad+spacing);
     textSize(12);
     fill(255);
-    text(rows + " rows\n" + cols + " cols", 10, height-20);
+    long currentTimer = millis() - timerval;
+    text(rows + " rows\n" + cols + " cols\n" + currentTimer + " currentTimer", 350, 10);
   }
 
-  if (millis() - timerval > shortWait) autofade=true;
   if (millis() - timerval > longWait) longwaitSequence(); 
   else longwaitFirstRun = true;
 }
@@ -278,22 +276,27 @@ void keyPressed() {
 }
 
 boolean longwaitFirstRun = true;
+int letterRand = 0;
 
 void longwaitSequence() {
+  char[] letters = { 'T', 'X', 'Q', 'R', 'L', 'A' };
+
   if (longwaitFirstRun) {
-    ballRad = (int)random(30, 150);
+    ballRad = (int)random(30, 100);
     polypoints = (int)random(3, 8);
     gridSkewInput = (int)random(0, 100);
+    letterRand = int(random(letters.length));
     longwaitFirstRun = false;
   }
+
   resetMarked();
   fill(255, 128);
-  textAlign(CENTER, CENTER);
+  textAlign(CENTER, TOP);
   textFont(font, 50);
   String tryDrawing = "Try drawing the letter";
-  text(tryDrawing, width/2, 50);
+  text(tryDrawing, width/2, 20);
   textFont(font, 800);
-  text('T', width/2, height/2);
+  text(letters[letterRand], width/2, -50);
 }
 
 
@@ -315,7 +318,6 @@ void serialEvent(Serial myPort) {
 
 void mouseMoved() {
   timerval = millis(); // reset activity timer
-  autofade = false;
 }
 
 // shamelessly stolen from the internet and modified a bit
@@ -331,8 +333,8 @@ void polygon(int x, int y, int npoints) {
 }
 
 void resetMarked() {
-  for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-    for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
+  for (int i = 0; i < cols; i++) {
+    for (int j = 0; j < rows; j++) {
       ballgrid[i][j].resetColor();
     }
   }

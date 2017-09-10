@@ -32,29 +32,26 @@ class Shape
     if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
     else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
 
-    //// trigger once when moused over
-    //if (moused) {
-    //  alpha = 255 * fadeRate;
-    //  fill(selected, alpha);
-    //  if (alpha != 255) moused = false;
-    //}
-
+    // trigger once when moused over
     if (moused) {
-      fill(selected);
-      if (autofade) {
-        alpha *= fadeRate;
-        fill(selected, alpha);
-      }
+      alpha = 255 * fadeRate;
+      fill(selected, alpha);
+      if (alpha != 255) moused = false;
     }
 
     // trigger when already in fade, to continue fade
-
+    if (alpha < 255) {
+      alpha *= fadeRate;
+      fill(selected, alpha);
+    }
 
     if (polypoints < 7) polygon((int)dotPos.x, (int)dotPos.y, polypoints);
     else ellipse(dotPos.x, dotPos.y, ballRad, ballRad);
   }
+  
   void resetColor() {
     moused = false;
+    alpha = 255; // to properly reset values after longWaitSequence
   }
 
   void showColor() {
