@@ -431,7 +431,7 @@ class Shape
 }
   public void settings() {  size(1280, 800); }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "ToughArtInteractionPrototype" };
+    String[] appletArgs = new String[] { "--present", "--window-color=#000000", "--hide-stop", "ToughArtInteractionPrototype" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {
