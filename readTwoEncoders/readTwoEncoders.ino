@@ -31,6 +31,10 @@
  * v 0.22 slowwheel branch 12 Sep. 2017
  *  * horizontal encoder (left) slows down by factor of 3 (screen is about 3:2 so this
  *      roughly equalizes the speeds of both encoders)
+ *      
+ * v 0.23 slowwheel branch 
+ *  * fixed dumb typo
+ * 
  */
 
 #include <Encoder.h>
@@ -49,7 +53,7 @@ void loop() {
   long rightPos = right.read();
 
   if(leftPos < 0) left.write(29999);
-  else if(leftPos > 19999) left.write(0);
+  else if(leftPos > 29999) left.write(0);
   if(rightPos < 0) right.write(19999);
   else if(rightPos > 19999) right.write(0);
   
@@ -57,7 +61,7 @@ void loop() {
   if (leftPos != leftOldPos || rightPos != rightOldPos) {
     leftOldPos = leftPos;
     rightOldPos = rightPos;
-    int leftSend = leftPos/2;
+    int leftSend = leftPos/3;
     int rightSend = rightPos/2;
     Serial.print(leftSend);
     Serial.print(',');
