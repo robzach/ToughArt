@@ -150,6 +150,9 @@ public class ToughArtInteractionPrototype extends PApplet {
  
  v. 1.01 Sep 10, 2017
  longWait defaults to 20 seconds
+ 
+ v. 1.02 slowwheel branch Sep 10 2017 
+ small changes in default background color and unselected color
   
  */
 
@@ -177,8 +180,8 @@ ControlP5 cp5;
 long timerval;
 long longWait = 20 * 1000;
 
-int back = 10; // background
-int unselected = 30;
+int back = 0; // background
+int unselected = 20;
 int selected = color(249, 252, 88); // to be modified by cp5 colorWheel below
 
 int margin = 25;
@@ -428,7 +431,7 @@ class Shape
 }
   public void settings() {  size(1280, 800); }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "--present", "--window-color=#666666", "--hide-stop", "ToughArtInteractionPrototype" };
+    String[] appletArgs = new String[] { "--present", "--window-color=#000000", "--hide-stop", "ToughArtInteractionPrototype" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {

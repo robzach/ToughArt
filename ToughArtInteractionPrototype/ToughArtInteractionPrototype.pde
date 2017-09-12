@@ -130,6 +130,9 @@
  
  v. 1.01 Sep 10, 2017
  longWait defaults to 20 seconds
+ 
+ v. 1.02 slowwheel branch Sep 10 2017 
+ small changes in default background color and unselected color
   
  */
 
@@ -157,8 +160,8 @@ ControlP5 cp5;
 long timerval;
 long longWait = 20 * 1000;
 
-color back = 10; // background
-color unselected = 30;
+color back = 0; // background
+color unselected = 20;
 color selected = color(249, 252, 88); // to be modified by cp5 colorWheel below
 
 int margin = 25;
