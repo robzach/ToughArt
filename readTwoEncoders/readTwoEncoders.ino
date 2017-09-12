@@ -23,12 +23,16 @@
  * v 0.2 9 Sep. 2017
  *  * encoders roll over (less than 0 becomes 9999, more than 9999 becomes 0)
  *  * removed reset button
+ *  
+ * v 0.21 slowwheel branch 12 Sep. 2017
+ *  * encoders scale down by a factor of 2, but still send values [0,10000]
+ *  * digital pins for noninterrupt pins moved for greater ease of wiring
  */
 
 #include <Encoder.h>
 
-Encoder left(2,4);
-Encoder right(3,5);
+Encoder left(2,6);
+Encoder right(3,7);
 
 void setup() {
   Serial.begin(9600);
@@ -40,17 +44,19 @@ void loop() {
   long leftPos = left.read();
   long rightPos = right.read();
 
-  if(leftPos < 0) left.write(9999);
-  else if(leftPos > 9999) left.write(0);
-  if(rightPos < 0) right.write(9999);
-  else if(rightPos > 9999) right.write(0);
+  if(leftPos < 0) left.write(19999);
+  else if(leftPos > 19999) left.write(0);
+  if(rightPos < 0) right.write(19999);
+  else if(rightPos > 19999) right.write(0);
   
   
   if (leftPos != leftOldPos || rightPos != rightOldPos) {
     leftOldPos = leftPos;
     rightOldPos = rightPos;
-    Serial.print(leftPos);
+    int leftSend = leftPos/2;
+    int rightSend = rightPos/2;
+    Serial.print(leftSend);
     Serial.print(',');
-    Serial.println(rightPos);
+    Serial.println(rightSend);
   }
 }
