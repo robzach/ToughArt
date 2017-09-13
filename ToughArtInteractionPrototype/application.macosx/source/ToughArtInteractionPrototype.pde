@@ -133,7 +133,15 @@
  
  v. 1.02 slowwheel branch Sep 10 2017 
  small changes in default background color and unselected color
-  
+ 
+ v. 1.03 shapesuggestion branch Sep 13 2017
+ longer fade time
+ suggesting shapes in addition to letters
+ timeout at 10 seconds not 20
+ 
+ v. 1.04 Sep 13 2017
+ adding a few more shapes to shape suggestions
+ 
  */
 
 import controlP5.*;
@@ -154,11 +162,11 @@ int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
 int gridSkewInput = 0;
-float fadeRate = 0.997;
+float fadeRate = 0.998;
 ControlP5 cp5;
 
 long timerval;
-long longWait = 20 * 1000;
+long longWait = 10 * 1000;
 
 color back = 0; // background
 color unselected = 20;
@@ -287,6 +295,7 @@ void keyPressed() {
 
 boolean longwaitFirstRun = true;
 int letterRand = 0;
+float randSwitch;
 
 void longwaitSequence() {
   char[] letters = { 'T', 'X', 'Q', 'R', 'L', 'A' };
@@ -296,22 +305,48 @@ void longwaitSequence() {
     polypoints = (int)random(3, 8);
     gridSkewInput = (int)random(0, 100);
     letterRand = int(random(letters.length));
+    randSwitch = random(1);
     longwaitFirstRun = false;
   }
 
   resetMarked();
   fill(255, 128);
   textAlign(CENTER, TOP);
-  textFont(font, 50);
-  String tryDrawing = "Try drawing the letter";
-  text(tryDrawing, width/2, 20);
-  textFont(font, 800);
-  text(letters[letterRand], width/2, -50);
+  if (randSwitch > 0.5) {
+    textFont(font, 50);
+    String tryDrawing = "Work together to draw the letter";
+    text(tryDrawing, width/2, 20);
+    textFont(font, 800);
+    text(letters[letterRand], width/2, -50);
+  } else {
+    textFont(font, 50);
+    String tryDrawing = "Work together to draw a shape";
+    text(tryDrawing, width/2, 20);
+    // draw shapes here
+    if (randSwitch < 0.1) {
+      rectMode(CENTER);
+      rect(width/2, height/2, width/3, width/3);
+    } 
+    else if (randSwitch < 0.2) {
+      ellipse(width/2, height/2, width/3, width/3);
+    } 
+    else if (randSwitch < 0.3) {
+      polygon(width/2, height/2, 3, width/3);
+    }
+    else if (randSwitch < 0.4) {
+      polygon(width/2, height/2, 5, width/3);
+    }
+    else polygon(width/2, height/2, 6, width/3);
+    
+  }
 }
 
 
 // from http://www.interactiondesign.se/wiki/courses:intro.prototyping.spring.2015.jan19_20_21
 // though I had to change the second line to use readStringUntil() to make it actually work
+int oldwheelX, oldwheelY;
+int[] motionvotes = new int[10];
+int count = 0;
 void serialEvent(Serial myPort) {
   timerval = millis(); // reset activity timer
   String inString = myPort.readStringUntil(10);
@@ -322,7 +357,16 @@ void serialEvent(Serial myPort) {
     if (values.length>1) {
       wheelX = (int)map(int(values[0]), 0, 10000, margin, Rmargin);
       wheelY = (int)map(int(values[1]), 0, 10000, margin, Bmargin);
+      //if (wheelX != oldwheelX || wheelY != oldwheelY) motionvotes[count] = 0;
+      //else motionvotes[count] = 1;
     }
+    //count++;
+    //if (count == 10){
+    //  int product;
+    //  for (int i = 0; i<10; i++) product *= motionvotes[i];
+    //  if (product == 1); //proceed
+    //  else {}
+    //}
   }
 }
 
@@ -337,6 +381,17 @@ void polygon(int x, int y, int npoints) {
   for (float a = 0; a < TWO_PI; a += angle) {
     float sx = x + cos(a) * ballRad/2;
     float sy = y + sin(a) * ballRad/2;
+    vertex(sx, sy);
+  }
+  endShape(CLOSE);
+}
+
+void polygon(int x, int y, int npoints, int diameter) {
+  float angle = TWO_PI / npoints;
+  beginShape();
+  for (float a = 0; a < TWO_PI; a += angle) {
+    float sx = x + cos(a) * diameter/2;
+    float sy = y + sin(a) * diameter/2;
     vertex(sx, sy);
   }
   endShape(CLOSE);
