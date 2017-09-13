@@ -139,6 +139,9 @@
  suggesting shapes in addition to letters
  timeout at 10 seconds not 20
  
+ v. 1.04 Sep 13 2017
+ adding a few more shapes to shape suggestions
+ 
  */
 
 import controlP5.*;
@@ -309,28 +312,32 @@ void longwaitSequence() {
   resetMarked();
   fill(255, 128);
   textAlign(CENTER, TOP);
-  if (randSwitch > 0.5){
+  if (randSwitch > 0.5) {
     textFont(font, 50);
     String tryDrawing = "Work together to draw the letter";
     text(tryDrawing, width/2, 20);
     textFont(font, 800);
     text(letters[letterRand], width/2, -50);
-  }
-  else {
+  } else {
     textFont(font, 50);
     String tryDrawing = "Work together to draw a shape";
     text(tryDrawing, width/2, 20);
     // draw shapes here
-    if (randSwitch < 0.166){
-    rectMode(CENTER);
-    rect(width/2,height/2,width/3,width/3);
-    }
-    else if (randSwitch < 0.33){
+    if (randSwitch < 0.1) {
+      rectMode(CENTER);
+      rect(width/2, height/2, width/3, width/3);
+    } 
+    else if (randSwitch < 0.2) {
       ellipse(width/2, height/2, width/3, width/3);
-    }
-    else{
+    } 
+    else if (randSwitch < 0.3) {
       polygon(width/2, height/2, 3, width/3);
     }
+    else if (randSwitch < 0.4) {
+      polygon(width/2, height/2, 5, width/3);
+    }
+    else polygon(width/2, height/2, 6, width/3);
+    
   }
 }
 
