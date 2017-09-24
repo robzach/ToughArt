@@ -162,6 +162,10 @@ public class ToughArtInteractionPrototype extends PApplet {
  v. 1.04 Sep 13 2017
  adding a few more shapes to shape suggestions
  
+ v. 1.05 Sep 24 2017
+ changing fadeRate to 0.9985
+ updated non-serial basic drawing function for loop limits to match serial version
+ 
  */
 
 
@@ -182,7 +186,7 @@ int spacing = 0;
 int cursorRad = 8;
 int polypoints = 3;
 int gridSkewInput = 0;
-float fadeRate = 0.998f;
+float fadeRate = 0.9985f;
 ControlP5 cp5;
 
 long timerval;
@@ -282,8 +286,8 @@ public void draw() {
     fill(0, 255, 255); // cursor marker color
     ellipse(wheelX, wheelY, cursorRad, cursorRad); // cursor marker
   } else {
-    for (int i = 1; i*(ballRad+spacing) < Rmargin; i++) {
-      for (int j = 1; j*(ballRad+spacing) < Bmargin; j++) {
+    for (int i = 1; i < cols; i++) {
+      for (int j = 1; j < rows; j++) {
         if (j%2 == 0) ballgrid[i][j].display(i*(ballRad+spacing)+gridSkew+margin, j*(ballRad+spacing)+margin, mouseX, mouseY);
         else          ballgrid[i][j].display(i*(ballRad+spacing)+margin, j*(ballRad+spacing)+margin, mouseX, mouseY);
       }
@@ -424,7 +428,6 @@ public void resetMarked() {
     }
   }
 }
-
 class Shape
 {
   int x, y, rad, inside;
@@ -487,7 +490,7 @@ class Shape
 }
   public void settings() {  size(1280, 800); }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "--present", "--window-color=#000000", "--hide-stop", "ToughArtInteractionPrototype" };
+    String[] appletArgs = new String[] { "--present", "--window-color=#666666", "--hide-stop", "ToughArtInteractionPrototype" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {
