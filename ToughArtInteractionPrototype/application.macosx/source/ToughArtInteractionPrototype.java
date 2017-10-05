@@ -166,6 +166,9 @@ public class ToughArtInteractionPrototype extends PApplet {
  changing fadeRate to 0.9985
  updated non-serial basic drawing function for loop limits to match serial version
  
+ v. 1.06 Oct 5 2017
+ changed longwait to 25 seconds
+ 
  */
 
 
@@ -190,7 +193,7 @@ float fadeRate = 0.9985f;
 ControlP5 cp5;
 
 long timerval;
-long longWait = 10 * 1000;
+long longWait = 25 * 1000;
 
 int back = 0; // background
 int unselected = 20;
